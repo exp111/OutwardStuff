@@ -53,41 +53,79 @@ namespace RagdollCannon
             // Let Harmony Patch Outward's Behavior
             var harmony = new Harmony(ID);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            LocalCharacterControl_Patch.Init();
         }
     }
 
-    // Patches need to be outside of the BepInExPlugin
-    [HarmonyPatch(typeof(LocalCharacterControl), "UpdateInteraction")]
-    class UpdateInteraction_Patch
-    {
-        static void Postfix(LocalCharacterControl __instance)
-        {
-            //RagdollCanon.Instance.Log("Calling UpdateInteraction:Postfix");
-            if (__instance.InputLocked || __instance.Character.CharacterUI.ChatPanel.IsChatFocused)
-            {
-                return;
-            }
-            if (RagdollCannon.launchKey.Value.IsDown())
-            {
-                //RagdollCanon.Instance.Log($"UpdateInteraction:Postfix: Key is down! Setting ragdoll to {!__instance.Character.RagdollActive}");
-                try
-                {
-                    var value = !__instance.Character.RagdollActive;
-                    /* __instance.Character.SetRagdollActive(!__instance.Character.RagdollActive); */
-                    RagdollCannon.methodRagdollActive.Invoke(__instance.Character, 
-                        new object[] { value });
 
-                    if (value)
-                    {
-                        // FIXME: doesnt work that great on the y(/z?) axis, instead mostly a shallow launch. maybe get that axis from Global.MainCamera?
-                        __instance.Character.RagdollRigidbody.AddForce(
-                            __instance.Character.CharacterCamera.transform.forward * RagdollCannon.launchStrength.Value, 
-                            ForceMode.Impulse);
-                    }
+    class LocalCharacterControl_Patch : Photon.MonoBehaviour
+    {
+        internal static LocalCharacterControl_Patch Instance;
+        internal const int VIEW_ID = 981; //TODO: find out how tf those are used by mods. we need a viewID for photon to work. currently it seems like we just hope for the best
+        internal static void Init()
+        {
+            var obj = new GameObject("RagdollCannonRPC");
+            DontDestroyOnLoad(obj);
+            obj.hideFlags |= HideFlags.HideAndDontSave;
+            Instance = obj.AddComponent<LocalCharacterControl_Patch>();
+            var view = obj.AddComponent<PhotonView>();
+            view.viewID = VIEW_ID;
+        }
+
+        [PunRPC]
+        public void RagdollCannon_SetRagdoll(Character character, bool value)
+        {
+            try
+            { 
+                //RagdollCannon.Instance.Log($"RPC Called: Setting ragdoll to {value} on {character}");
+                /* __instance.Character.SetRagdollActive(!__instance.Character.RagdollActive); */
+                RagdollCannon.methodRagdollActive.Invoke(character,
+                    new object[] { value });
                 }
-                catch (Exception e)
+            catch (Exception e)
+            {
+                RagdollCannon.Instance.Log($"RPC: We done fucked up: {e.Message}");
+            }
+        }
+
+        // Patches need to be outside of the BepInExPlugin
+        [HarmonyPatch(typeof(LocalCharacterControl), "UpdateInteraction")]
+        class LocalCharacterControl_UpdateInteraction
+        {
+            static void Postfix(LocalCharacterControl __instance)
+            {
+                //RagdollCanon.Instance.Log("Calling UpdateInteraction:Postfix");
+                if (__instance.InputLocked || __instance.Character.CharacterUI.ChatPanel.IsChatFocused)
                 {
-                    RagdollCannon.Instance.Log($"We done fucked up: {e.Message}");
+                    return;
+                }
+                if (RagdollCannon.launchKey.Value.IsDown())
+                {
+                    //RagdollCannon.Instance.Log($"UpdateInteraction:Postfix: Key is down! Setting ragdoll to {!__instance.Character.RagdollActive}");
+                    try
+                    {
+                        var value = !__instance.Character.RagdollActive;
+                        //RagdollCannon.Instance.Log($"photonView:{Instance.photonView}");
+                        Instance.photonView.RPC(nameof(RagdollCannon_SetRagdoll), PhotonTargets.All, new object[]
+                        {
+                        __instance.Character,
+                        value
+                        });
+                        //RagdollCannon.Instance.Log("Called RPC!");
+
+                        if (value)
+                        {
+                            // FIXME: doesnt work that great on the y(/z?) axis, instead mostly a shallow launch. maybe get that axis from Global.MainCamera?
+                            __instance.Character.RagdollRigidbody.AddForce(
+                                __instance.Character.CharacterCamera.transform.forward * RagdollCannon.launchStrength.Value,
+                                ForceMode.Impulse);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        RagdollCannon.Instance.Log($"We done fucked up: {e.Message}");
+                    }
                 }
             }
         }
