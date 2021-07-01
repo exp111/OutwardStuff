@@ -5,17 +5,17 @@ using System;
 using System.Reflection;
 using UnityEngine;
 
-namespace RagdollCanon
+namespace RagdollCannon
 {
     [BepInPlugin(ID, NAME, VERSION)]
-    public class RagdollCanon : BaseUnityPlugin
+    public class RagdollCannon : BaseUnityPlugin
     {
         const string ID = "com.exp111.ragdollcanon";
         const string NAME = "RagdollCanon";
         const string VERSION = "1.0";
 
 
-        public static RagdollCanon Instance;
+        public static RagdollCannon Instance;
 
         // Consume Items when crafting fails: enable for Alchemy / Cooking
         public static ConfigEntry<KeyboardShortcut> launchKey;
@@ -67,27 +67,27 @@ namespace RagdollCanon
             {
                 return;
             }
-            if (RagdollCanon.launchKey.Value.IsDown())
+            if (RagdollCannon.launchKey.Value.IsDown())
             {
                 //RagdollCanon.Instance.Log($"UpdateInteraction:Postfix: Key is down! Setting ragdoll to {!__instance.Character.RagdollActive}");
                 try
                 {
                     var value = !__instance.Character.RagdollActive;
                     /* __instance.Character.SetRagdollActive(!__instance.Character.RagdollActive); */
-                    RagdollCanon.methodRagdollActive.Invoke(__instance.Character, 
+                    RagdollCannon.methodRagdollActive.Invoke(__instance.Character, 
                         new object[] { value });
 
                     if (value)
                     {
                         // FIXME: doesnt work that great on the y(/z?) axis, instead mostly a shallow launch. maybe get that axis from Global.MainCamera?
                         __instance.Character.RagdollRigidbody.AddForce(
-                            __instance.Character.CharacterCamera.transform.forward * RagdollCanon.launchStrength.Value, 
+                            __instance.Character.CharacterCamera.transform.forward * RagdollCannon.launchStrength.Value, 
                             ForceMode.Impulse);
                     }
                 }
                 catch (Exception e)
                 {
-                    RagdollCanon.Instance.Log($"We done fucked up: {e.Message}");
+                    RagdollCannon.Instance.Log($"We done fucked up: {e.Message}");
                 }
             }
         }

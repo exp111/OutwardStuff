@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FailedRecipes", "FailedRecipesFix\FailedRecipes.csproj", "{50897B70-0431-40E0-943F-2445F8EC003D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagdollCanon", "RagdollCanon\RagdollCanon.csproj", "{4595DD5C-DB5B-478F-A690-F99772EAE8F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagdollCannon", "RagdollCannon\RagdollCannon.csproj", "{4595DD5C-DB5B-478F-A690-F99772EAE8F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
