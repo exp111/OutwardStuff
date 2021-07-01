@@ -2,11 +2,7 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RagdollCanon
@@ -31,8 +27,8 @@ namespace RagdollCanon
         /// </summary>
         void SetupConfig()
         {
-            launchKey = Config.Bind("General", "launchKey", new KeyboardShortcut(UnityEngine.KeyCode.Delete), "The key which launches the player");
-            launchStrength = Config.Bind("General", "launchStrength", 10f, "The strength with which the player is launched");
+            launchKey = Config.Bind("General", "launchKey", new KeyboardShortcut(KeyCode.Delete), "The key which launches the player");
+            launchStrength = Config.Bind("General", "launchStrength", 500f, "The strength with which the player is launched");
         }
 
         public void Log(object data)
@@ -73,21 +69,20 @@ namespace RagdollCanon
             }
             if (RagdollCanon.launchKey.Value.IsDown())
             {
-                RagdollCanon.Instance.Log($"UpdateInteraction:Postfix: Key is down! Setting ragdoll to {!__instance.Character.RagdollActive}");
+                //RagdollCanon.Instance.Log($"UpdateInteraction:Postfix: Key is down! Setting ragdoll to {!__instance.Character.RagdollActive}");
                 try
                 {
                     var value = !__instance.Character.RagdollActive;
-                    //__instance.Character.SetRagdollActive(!__instance.Character.RagdollActive);
+                    /* __instance.Character.SetRagdollActive(!__instance.Character.RagdollActive); */
                     RagdollCanon.methodRagdollActive.Invoke(__instance.Character, 
                         new object[] { value });
 
                     if (value)
                     {
-                        __instance.Character.CharMoveBlockCollider.gameObject.SetActive(false);
+                        // FIXME: doesnt work that great on the y(/z?) axis, instead mostly a shallow launch. maybe get that axis from Global.MainCamera?
                         __instance.Character.RagdollRigidbody.AddForce(
                             __instance.Character.CharacterCamera.transform.forward * RagdollCanon.launchStrength.Value, 
                             ForceMode.Impulse);
-                        //__instance.Character.RagdollRigidbody.AddForce(Global.MainCamera.transform.forward * RagdollCanon.launchStrength.Value, ForceMode.Impulse);
                     }
                 }
                 catch (Exception e)
