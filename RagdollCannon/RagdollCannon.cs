@@ -74,15 +74,16 @@ namespace RagdollCannon
         }
 
         [PunRPC]
-        public void RagdollCannon_SetRagdoll(Character character, bool value)
+        public void RagdollCannon_SetRagdoll(string charUID, bool value)
         {
             try
-            { 
+            {
+                var character = CharacterManager.Instance.GetCharacter(charUID);
                 //RagdollCannon.Instance.Log($"RPC Called: Setting ragdoll to {value} on {character}");
                 /* __instance.Character.SetRagdollActive(!__instance.Character.RagdollActive); */
                 RagdollCannon.methodRagdollActive.Invoke(character,
                     new object[] { value });
-                }
+            }
             catch (Exception e)
             {
                 RagdollCannon.Instance.Log($"RPC: We done fucked up: {e.Message}");
@@ -95,6 +96,7 @@ namespace RagdollCannon
         {
             static void Postfix(LocalCharacterControl __instance)
             {
+                //FIXME: move to own update or prefix to allow using other buttons
                 //RagdollCanon.Instance.Log("Calling UpdateInteraction:Postfix");
                 if (__instance.InputLocked || __instance.Character.CharacterUI.ChatPanel.IsChatFocused)
                 {
@@ -109,7 +111,7 @@ namespace RagdollCannon
                         //RagdollCannon.Instance.Log($"photonView:{Instance.photonView}");
                         Instance.photonView.RPC(nameof(RagdollCannon_SetRagdoll), PhotonTargets.All, new object[]
                         {
-                        __instance.Character,
+                        __instance.Character.UID.ToString(),
                         value
                         });
                         //RagdollCannon.Instance.Log("Called RPC!");
@@ -120,6 +122,12 @@ namespace RagdollCannon
                             __instance.Character.RagdollRigidbody.AddForce(
                                 __instance.Character.CharacterCamera.transform.forward * RagdollCannon.launchStrength.Value,
                                 ForceMode.Impulse);
+                        }
+                        else
+                        {
+                            // To fix the character from spaghetting out, reset animation/locomotion
+                            // this may cause some side effects
+                            __instance.Character.ForceBackToLocomotion();
                         }
                     }
                     catch (Exception e)
