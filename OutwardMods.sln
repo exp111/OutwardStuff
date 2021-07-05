@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FailedRecipes", "FailedReci
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagdollCannon", "RagdollCannon\RagdollCannon.csproj", "{4595DD5C-DB5B-478F-A690-F99772EAE8F7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationSnooping", "AnimationSnooping\AnimationSnooping.csproj", "{225E3739-1C67-4E92-8C36-D381B21874FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationTest", "AnimationTest\AnimationTest.csproj", "{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{4595DD5C-DB5B-478F-A690-F99772EAE8F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4595DD5C-DB5B-478F-A690-F99772EAE8F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4595DD5C-DB5B-478F-A690-F99772EAE8F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{225E3739-1C67-4E92-8C36-D381B21874FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{225E3739-1C67-4E92-8C36-D381B21874FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{225E3739-1C67-4E92-8C36-D381B21874FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{225E3739-1C67-4E92-8C36-D381B21874FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

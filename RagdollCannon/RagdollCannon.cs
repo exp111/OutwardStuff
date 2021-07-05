@@ -127,6 +127,8 @@ namespace RagdollCannon
                         {
                             // To fix the character from spaghetting out, reset animation/locomotion
                             // this may cause some side effects
+                            // TODO: actually caused by this.InLocomotion being false, so maybe check this in if (value)
+                            // because spazzing out also causes RagdollActive to being false, needs more debugging though
                             __instance.Character.ForceBackToLocomotion();
                         }
                     }
