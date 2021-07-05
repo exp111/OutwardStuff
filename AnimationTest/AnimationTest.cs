@@ -27,29 +27,32 @@ namespace AnimationTest
         {
             Instance = this;
             Logger.LogInfo("Awake");
-            var basePath = Paths.PluginPath;
+
             try
             {
+                var basePath = Paths.PluginPath;
                 var path = Path.Combine(basePath, "AnimationTest", "com.exp111.animationtest");
                 Logger.LogInfo(path);
-                var asset = AssetBundle.LoadFromFile(path);
-                Logger.LogInfo(asset);
-                var assets = asset.LoadAllAssets();
-                foreach (var assetName in asset.GetAllAssetNames())
+                var assetBundle = AssetBundle.LoadFromFile(path);
+                Logger.LogInfo(assetBundle);
+                var assets = assetBundle.LoadAllAssets();
+                foreach (var asset in assets)
                 {
-                    Logger.LogInfo($"Found asset: {assetName}");
+                    Logger.LogInfo($"Found asset: {asset}, type: {asset.GetType()}");
+                    if (asset is RuntimeAnimatorController)
+                    {
+                        Animator = asset;
+                        Logger.LogInfo($"Found RuntimeAnimatorController: {asset}");
+                    }
                 }
-                foreach (var assetName in assets)
-                {
-                    Logger.LogInfo($"Found asset: {assetName}, type: {assetName.GetType()}");
-                }
-                Animator = assets.FirstOrDefault();
+                //Animator = assets.FirstOrDefault();
             }
             catch (Exception e)
             {
-                Logger.LogInfo($"Fucky wucky: {e.Message}");
+                Logger.LogInfo($"Something fucked up during loading: {e.Message}");
             }
 
+            // Apply Patches
             var harmony = new Harmony(ID);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
@@ -60,6 +63,7 @@ namespace AnimationTest
         }
     }
 
+    // Override the trogPlayer AnimatorController with our own
     [HarmonyPatch(typeof(Character), "Awake")]
     class Character_AwakePatch
     {
