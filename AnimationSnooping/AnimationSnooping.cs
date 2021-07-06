@@ -19,7 +19,7 @@ namespace AnimationSnooping
 
         public void Awake()
         {
-            Logger.LogDebug("Awake");
+            Logger.LogInfo("Awake");
         }
 
         public void OnGUI()
@@ -30,13 +30,14 @@ namespace AnimationSnooping
             if (SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter == null)
                 return;
 
+            // is this the proper way to get the main character?
             var anim = SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter.Animator;
             //FieldInfo animator = typeof(Character).GetField("m_animator", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             //var anim = (Animator)animator.GetValue(SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter);
             var state = anim.GetCurrentAnimatorStateInfo(0);
-            var label = $"FullPath: {state.fullPathHash}, ShortName: {state.shortNameHash}, Name: {state.nameHash}";
-            Logger.LogDebug(label);
-            GUI.Label(new Rect(new Vector2(100, 100), new Vector2(100, 100)), label);
+            var label = $"FullPath: {(uint)state.fullPathHash}, ShortName: {(uint)state.shortNameHash}, Name: {(uint)state.nameHash}";
+            Logger.LogInfo(label);
+            GUI.Label(new Rect(new Vector2(100, 100), new Vector2(150, 200)), label);
         }
     }
 }
