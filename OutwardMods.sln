@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30204.135
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FailedRecipes", "FailedRecipesFix\FailedRecipes.csproj", "{50897B70-0431-40E0-943F-2445F8EC003D}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationSnooping", "AnimationSnooping\AnimationSnooping.csproj", "{225E3739-1C67-4E92-8C36-D381B21874FF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationTest", "AnimationTest\AnimationTest.csproj", "{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Randomizer", "Randomizer\Randomizer.csproj", "{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11FBCD1C-A13D-4EFB-B9ED-F34DD5134189}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
