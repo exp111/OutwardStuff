@@ -57,9 +57,17 @@ namespace Randomizer
             }
         }
 
+
         private void SetupConfig()
         {
-            RandomizerSeed = Config.Bind("General", "Seed", "test", "Randomizer Seed. Should give same items for the same seed (per drop table). Doesn't affect items/merchants immediately, but only after an area change/shop refresh.");
+            RandomizerSeed = Config.Bind("General", "Seed", "", new ConfigDescription("Randomizer Seed. Should give same items for the same seed (per drop table). Doesn't affect items/merchants immediately, but only after an area change/shop refresh.",
+                null,
+                new ConfigurationManagerAttributes { CustomDrawer = SeedDrawer, HideDefaultButton = true }));
+            // Generate a random seed if it's our first time/we got an empty seed
+            if (RandomizerSeed.Value == (string) RandomizerSeed.DefaultValue)
+                RandomizerSeed.Value = GetRandomSeed();
+
+
             // Randomize
             RandomizeMerchants = Config.Bind("General", "Randomize Merchants", true, "Randomize merchant inventories.");
             RandomizeGatherables = Config.Bind("General", "Randomize Gatherables", true, "Randomize gatherables like mining/fishing spots or berry bushes.");
@@ -69,9 +77,35 @@ namespace Randomizer
             // Filter Options
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
         }
-        
+
+        // Generates a random 8 letter string
+        private static string GetRandomSeed()
+        {
+            var random = new Random();
+            var str = "";
+            for (var i = 0; i < 8; i++)
+            {
+                var next = random.Next(0, 26);
+                str += Convert.ToChar(65 + next);
+            }
+            return str;
+        }
+
+        // Config GUI for the Randomizer Seed
+        static void SeedDrawer(ConfigEntryBase entry)
+        {
+            // Textfield
+            entry.SetSerializedValue(GUILayout.TextField(entry.GetSerializedValue(), GUILayout.ExpandWidth(true)));
+            // Random button to generate a random seed
+            if (GUILayout.Button("Random", GUILayout.ExpandWidth(true)))
+            {
+                entry.SetSerializedValue(GetRandomSeed());
+            }
+        }
+
         public static int GetRandomItem(Item original, out Item item)
         {
+            //TODO: set sell value to original value?
             var itemPrefabs = ResourcesPrefabManager.ITEM_PREFABS;
             
             if (!RestrictSameCategory.Value)
