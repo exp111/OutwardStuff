@@ -27,7 +27,9 @@ namespace Randomizer
         public static ConfigEntry<bool> RandomizeMerchants;
         public static ConfigEntry<bool> RandomizeGatherables;
         public static ConfigEntry<bool> RandomizeEnemyDrops;
-        public static ConfigEntry<bool> RandomizeEnemyWeapons; //TODO: enemy weapons
+        public static ConfigEntry<bool> RandomizeEnemyWeapons;
+        public static ConfigEntry<bool> RandomizeEnemyArmor;
+        public static ConfigEntry<bool> RandomizeEnemyItems;
         public static ConfigEntry<bool> RandomizeContainers; //TODO: rather RandomizeLoot?
 
         public static ConfigEntry<bool> RestrictSameCategory;
@@ -64,7 +66,7 @@ namespace Randomizer
                 null,
                 new ConfigurationManagerAttributes { CustomDrawer = SeedDrawer, HideDefaultButton = true }));
             // Generate a random seed if it's our first time/we got an empty seed
-            if (RandomizerSeed.Value == (string) RandomizerSeed.DefaultValue)
+            if (RandomizerSeed.Value == (string)RandomizerSeed.DefaultValue)
                 RandomizerSeed.Value = GetRandomSeed();
 
 
@@ -72,6 +74,9 @@ namespace Randomizer
             RandomizeMerchants = Config.Bind("General", "Randomize Merchants", true, "Randomize merchant inventories.");
             RandomizeGatherables = Config.Bind("General", "Randomize Gatherables", true, "Randomize gatherables like mining/fishing spots or berry bushes.");
             RandomizeEnemyDrops = Config.Bind("General", "Randomize Enemy Drops", true, "Randomize enemy drops.");
+            RandomizeEnemyWeapons = Config.Bind("General", "Randomize Enemy Weapons", true, "Randomize enemy weapons.");
+            RandomizeEnemyArmor = Config.Bind("General", "Randomize Enemy Armor", true, "Randomize enemy armor.");
+            RandomizeEnemyItems = Config.Bind("General", "Randomize Enemy Items", false, "Randomize all spawned enemy items. This may lead to loss of items like dropped keys.");
             RandomizeContainers = Config.Bind("General", "Randomize Containers", true, "Randomize containers like treasure chests or junk piles.");
 
             // Filter Options
@@ -95,11 +100,11 @@ namespace Randomizer
         static void SeedDrawer(ConfigEntryBase entry)
         {
             // Textfield
-            entry.SetSerializedValue(GUILayout.TextField(entry.GetSerializedValue(), GUILayout.ExpandWidth(true)));
+            entry.BoxedValue = GUILayout.TextField((string)entry.BoxedValue, GUILayout.ExpandWidth(true));
             // Random button to generate a random seed
             if (GUILayout.Button("Random", GUILayout.ExpandWidth(true)))
             {
-                entry.SetSerializedValue(GetRandomSeed());
+                entry.BoxedValue = GetRandomSeed();
             }
         }
 
@@ -107,7 +112,7 @@ namespace Randomizer
         {
             //TODO: set sell value to original value?
             var itemPrefabs = ResourcesPrefabManager.ITEM_PREFABS;
-            
+
             if (!RestrictSameCategory.Value)
             {
                 var next = random.Next(0, ResourcesPrefabManager.ITEM_PREFABS.Values.Count);
@@ -231,7 +236,9 @@ namespace Randomizer
         }
     }
 
-    [HarmonyPatch(typeof(Merchant), "Initialize")]
+    // Harmony Hooks
+
+    [HarmonyPatch(typeof(Merchant), nameof(Merchant.Initialize))]
     public class MerchantInitializePatch
     {
         [HarmonyPrefix]
@@ -247,7 +254,7 @@ namespace Randomizer
         }
     }
 
-    [HarmonyPatch(typeof(SelfFilledItemContainer), "InitDrops")]
+    [HarmonyPatch(typeof(SelfFilledItemContainer), nameof(SelfFilledItemContainer.InitDrops))]
     public class SelfFilledItemContainerInitPatch
     {
         [HarmonyPrefix]
@@ -286,7 +293,7 @@ namespace Randomizer
         }
     }
 
-    [HarmonyPatch(typeof(LootableOnDeath), "Start")]
+    [HarmonyPatch(typeof(LootableOnDeath), nameof(LootableOnDeath.Start))]
     public class LootableOnDeathInitPatch
     {
         [HarmonyPrefix]
@@ -310,7 +317,7 @@ namespace Randomizer
         }
     }
 
-    [HarmonyPatch(typeof(TreasureChest), "InitDrops")]
+    [HarmonyPatch(typeof(TreasureChest), nameof(TreasureChest.InitDrops))]
     public class TreasureChestInitPatch
     {
         [HarmonyPrefix]
@@ -324,6 +331,102 @@ namespace Randomizer
             foreach (var dropable in __instance.DropPrefabsGen)
             {
                 Randomizer.RandomizeDropable(dropable);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(StartingEquipment), nameof(StartingEquipment.InitItems))]
+    public class StartingEquipmentInitPatch
+    {
+        [HarmonyPrefix]
+        public static void Prefix(StartingEquipment __instance)
+        {
+            if (!Randomizer.RandomizeEnemyWeapons.Value)
+                return;
+
+            //TODO: do we need a localplayer check? or is this a feature
+
+            //TODO: also randomize StartingPouchItems?
+
+            //Randomizer.Log.LogMessage($"StartingEquipment.InitEquipment: instance: {__instance}");
+            if (__instance.m_startingEquipmentTable != null) //TODO: is this deprecated? does anyone use it? maybe use OverrideStartingEquipments?
+                Randomizer.Log.LogMessage($"TODO: startingEquipmentTable: {__instance.m_startingEquipmentTable.Equipments}");
+
+            // Set seed
+            var seed = $"{Randomizer.RandomizerSeed.Value}_{__instance.m_character.m_name}";
+            Randomizer.random = new Random(seed.GetHashCode());
+
+            // Starting Pouch Items
+            if (__instance.StartingPouchItems != null)
+            {
+                //Randomizer.Log.LogMessage($"StartingPouchItems: {__instance.StartingPouchItems} ({__instance.StartingPouchItems.Count} Elements)");
+                foreach (var item in __instance.StartingPouchItems)
+                {
+                    if (item != null)
+                    {
+                        if (item.Item == null)
+                        {
+                            //Randomizer.Log.LogMessage($"item.Item is null");
+                            continue;
+                        }
+                            
+
+                        //Randomizer.Log.LogMessage($"{item.Item}x {item.Quantity}");
+                        if (item.Item is Weapon && !Randomizer.RandomizeEnemyWeapons.Value 
+                                && !Randomizer.RandomizeEnemyItems.Value)
+                        {
+                            //Randomizer.Log.LogMessage("nope");
+                            continue;
+                        }
+
+                        //TODO: maybe remove the randomize enemy items if we find a way to detect & skip key items
+
+                        Randomizer.GetRandomItem(item.Item, out var item1);
+                        item.Item = item1;
+                        //Randomizer.Log.LogMessage($"now: {item.Item}");
+                    }
+                }
+            }
+
+            // Starting Equipments
+            //Randomizer.Log.LogMessage($"startingEquipment: {__instance.m_startingEquipment}");
+            foreach (var equipment in __instance.m_startingEquipment)
+            {
+                if (equipment != null)
+                {
+                    //Randomizer.Log.LogMessage($"{equipment.EquipSlot}: {equipment}");
+                    
+                    switch (equipment.EquipSlot)
+                    {
+                        case EquipmentSlot.EquipmentSlotIDs.RightHand:
+                        case EquipmentSlot.EquipmentSlotIDs.LeftHand:
+                            if (!Randomizer.RandomizeEnemyWeapons.Value)
+                                continue;
+
+                            break;
+                        //TODO: quiver
+                        default:
+                            if (!Randomizer.RandomizeEnemyArmor.Value)
+                                continue;
+
+                            break;
+                    }
+
+                    // first filter the list
+                    var originalType = equipment.GetType();
+                    var filtered = new List<Item>();
+                    foreach (var prefab in ResourcesPrefabManager.ITEM_PREFABS.Values)
+                    {
+                        if (prefab.GetType() == originalType && ((Equipment)prefab).EquipSlot == equipment.EquipSlot) // also check if it's a boot/chest/helmet
+                            filtered.Add(prefab);
+                    }
+
+                    // then get a random item from the filtered list
+                    var next = Randomizer.random.Next(0, filtered.Count);
+                    __instance.m_startingEquipment[(int)equipment.EquipSlot] = (Equipment)filtered[next];
+                    //Randomizer.Log.LogMessage($"{__instance.m_character.m_name}: now {((Equipment)filtered[next]).EquipSlot}: {filtered[next]}");
+
+                }
             }
         }
     }
