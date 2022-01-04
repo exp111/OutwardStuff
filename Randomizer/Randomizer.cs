@@ -244,13 +244,20 @@ namespace Randomizer
         [HarmonyPrefix]
         public static void Prefix(Merchant __instance)
         {
-            if (!Randomizer.RandomizeMerchants.Value)
-                return;
+            try
+            {
+                if (!Randomizer.RandomizeMerchants.Value)
+                    return;
 
-            //Randomizer.Log.LogMessage($"merchant.initialize: instance: {__instance}, UID: {__instance.HolderUID}");
-            var prefabTransform = __instance.m_merchantInventoryTablePrefab;
-            var dropable = prefabTransform.GetComponent<Dropable>();
-            Randomizer.RandomizeDropable(dropable);
+                //Randomizer.Log.LogMessage($"merchant.initialize: instance: {__instance}, UID: {__instance.HolderUID}");
+                var prefabTransform = __instance.m_merchantInventoryTablePrefab;
+                var dropable = prefabTransform.GetComponent<Dropable>();
+                Randomizer.RandomizeDropable(dropable);
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"MerchantInitializePatch: {e}");
+            }
         }
     }
 
@@ -260,35 +267,42 @@ namespace Randomizer
         [HarmonyPrefix]
         public static void Prefix(SelfFilledItemContainer __instance)
         {
-            if (!Randomizer.RandomizeGatherables.Value)
-                return;
-
-            //Randomizer.Log.LogMessage($"SelfFilledItemContainer.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
-            var dropComp = __instance.GetComponent<Dropable>();
-            if (dropComp != null) //TODO: check whats up with this comp. is it being used? should we change it?
+            try
             {
-                Randomizer.Log.LogMessage($"TODO: Found dropable comp in SelfFilledContainer {dropComp}");
-                var guaranteedDrops = dropComp.GetComponentsInChildren<GuaranteedDrop>();
-                Randomizer.Log.LogMessage($"{guaranteedDrops} ({guaranteedDrops.Length} Elements)");
-                foreach (var drop in guaranteedDrops)
+                if (!Randomizer.RandomizeGatherables.Value)
+                    return;
+
+                //Randomizer.Log.LogMessage($"SelfFilledItemContainer.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
+                var dropComp = __instance.GetComponent<Dropable>();
+                if (dropComp != null) //TODO: check whats up with this comp. is it being used? should we change it?
                 {
-                    var drops = drop.m_itemDrops;
-                    Randomizer.Log.LogMessage($"- {Randomizer.ItemListToString(drops)}");
-                    Randomizer.RandomizeDropTable(drops);
+                    Randomizer.Log.LogMessage($"TODO: Found dropable comp in SelfFilledContainer {dropComp}");
+                    var guaranteedDrops = dropComp.GetComponentsInChildren<GuaranteedDrop>();
+                    Randomizer.Log.LogMessage($"{guaranteedDrops} ({guaranteedDrops.Length} Elements)");
+                    foreach (var drop in guaranteedDrops)
+                    {
+                        var drops = drop.m_itemDrops;
+                        Randomizer.Log.LogMessage($"- {Randomizer.ItemListToString(drops)}");
+                        Randomizer.RandomizeDropTable(drops);
+                    }
+                    var dropTables = dropComp.GetComponentsInChildren<DropTable>();
+                    Randomizer.Log.LogMessage($"dropTables: {dropTables} ({dropTables.Length} Elements)");
+                    foreach (var drop in dropTables)
+                    {
+                        var drops = drop.m_itemDrops;
+                        Randomizer.Log.LogMessage($"- {Randomizer.ItemListToString(drops)}");
+                        Randomizer.RandomizeDropTable(drops);
+                    }
                 }
-                var dropTables = dropComp.GetComponentsInChildren<DropTable>();
-                Randomizer.Log.LogMessage($"dropTables: {dropTables} ({dropTables.Length} Elements)");
-                foreach (var drop in dropTables)
+
+                foreach (var dropable in __instance.DropPrefabs)
                 {
-                    var drops = drop.m_itemDrops;
-                    Randomizer.Log.LogMessage($"- {Randomizer.ItemListToString(drops)}");
-                    Randomizer.RandomizeDropTable(drops);
+                    Randomizer.RandomizeDropable(dropable);
                 }
             }
-
-            foreach (var dropable in __instance.DropPrefabs)
+            catch (Exception e)
             {
-                Randomizer.RandomizeDropable(dropable);
+                Randomizer.Log.LogMessage($"SelfFilledItemContainerInitPatch: {e}");
             }
         }
     }
@@ -299,20 +313,27 @@ namespace Randomizer
         [HarmonyPrefix]
         public static void Prefix(LootableOnDeath __instance)
         {
-            if (!Randomizer.RandomizeEnemyDrops.Value)
-                return;
-
-            //Randomizer.Log.LogMessage($"LootableOnDeath.Start: instance: {__instance}, UID: {__instance.Character}");
-            foreach (var drop in __instance.SkinDrops)
+            try
             {
-                //Randomizer.Log.LogMessage($"SkinDrop: {drop} (Instantiated: {drop.Instantiated})");
-                Randomizer.RandomizeDropable(drop.Dropper);
+                if (!Randomizer.RandomizeEnemyDrops.Value)
+                    return;
+
+                //Randomizer.Log.LogMessage($"LootableOnDeath.Start: instance: {__instance}, UID: {__instance.Character}");
+                foreach (var drop in __instance.SkinDrops)
+                {
+                    //Randomizer.Log.LogMessage($"SkinDrop: {drop} (Instantiated: {drop.Instantiated})");
+                    Randomizer.RandomizeDropable(drop.Dropper);
+                }
+
+                foreach (var drop in __instance.LootDrops)
+                {
+                    //Randomizer.Log.LogMessage($"LootDrop: {drop} (Instantiated: {drop.Instantiated})");
+                    Randomizer.RandomizeDropable(drop.Dropper);
+                }
             }
-
-            foreach (var drop in __instance.LootDrops)
+            catch (Exception e)
             {
-                //Randomizer.Log.LogMessage($"LootDrop: {drop} (Instantiated: {drop.Instantiated})");
-                Randomizer.RandomizeDropable(drop.Dropper);
+                Randomizer.Log.LogMessage($"LootableOnDeathInitPatch: {e}");
             }
         }
     }
@@ -323,110 +344,121 @@ namespace Randomizer
         [HarmonyPrefix]
         public static void Prefix(TreasureChest __instance)
         {
-            if (!Randomizer.RandomizeContainers.Value)
-                return;
-
-            //Randomizer.Log.LogMessage($"TreasureChest.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
-            // no need to check for the spare comp cause the SelfFilledItemContainer patch will also check it (cause TreasureChest inherits that)
-            foreach (var dropable in __instance.DropPrefabsGen)
+            try
             {
-                Randomizer.RandomizeDropable(dropable);
+                if (!Randomizer.RandomizeContainers.Value)
+                    return;
+
+                //Randomizer.Log.LogMessage($"TreasureChest.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
+                // no need to check for the spare comp cause the SelfFilledItemContainer patch will also check it (cause TreasureChest inherits that)
+                foreach (var dropable in __instance.DropPrefabsGen)
+                {
+                    Randomizer.RandomizeDropable(dropable);
+                }
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"TreasureChestInitPatch: {e}");
             }
         }
     }
 
     [HarmonyPatch(typeof(StartingEquipment), nameof(StartingEquipment.InitItems))]
-    public class StartingEquipmentInitPatch
+    public class StartingEquipmentInitPatch //FIXME: some enemies "skip" the starting Equipment and use the normal weapons
     {
         [HarmonyPrefix]
         public static void Prefix(StartingEquipment __instance)
         {
-            if (!Randomizer.RandomizeEnemyWeapons.Value)
-                return;
-
-            //TODO: do we need a localplayer check? or is this a feature
-
-            //TODO: also randomize StartingPouchItems?
-
-            //Randomizer.Log.LogMessage($"StartingEquipment.InitEquipment: instance: {__instance}");
-            if (__instance.m_startingEquipmentTable != null) //TODO: is this deprecated? does anyone use it? maybe use OverrideStartingEquipments?
-                Randomizer.Log.LogMessage($"TODO: startingEquipmentTable: {__instance.m_startingEquipmentTable.Equipments}");
-
-            // Set seed
-            var seed = $"{Randomizer.RandomizerSeed.Value}_{__instance.m_character.m_name}";
-            Randomizer.random = new Random(seed.GetHashCode());
-
-            // Starting Pouch Items
-            if (__instance.StartingPouchItems != null)
+            try
             {
-                //Randomizer.Log.LogMessage($"StartingPouchItems: {__instance.StartingPouchItems} ({__instance.StartingPouchItems.Count} Elements)");
-                foreach (var item in __instance.StartingPouchItems)
+                //TODO: do we need a localplayer check? or is this a feature
+
+                //TODO: also randomize StartingPouchItems?
+
+                //Randomizer.Log.LogMessage($"StartingEquipment.InitItems: instance: {__instance} for {__instance.m_character}");
+                if (__instance.m_startingEquipmentTable != null) //TODO: is this deprecated? does anyone use it? maybe use OverrideStartingEquipments?
+                    Randomizer.Log.LogMessage($"TODO: startingEquipmentTable: {__instance.m_startingEquipmentTable.Equipments}");
+
+                // Set seed
+                var seed = $"{Randomizer.RandomizerSeed.Value}_{__instance.m_character.m_name}";
+                Randomizer.random = new Random(seed.GetHashCode());
+
+                // Starting Pouch Items
+                if (__instance.StartingPouchItems != null)
                 {
-                    if (item != null)
+                    //Randomizer.Log.LogMessage($"StartingPouchItems: {__instance.StartingPouchItems} ({__instance.StartingPouchItems.Count} Elements)");
+                    foreach (var item in __instance.StartingPouchItems)
                     {
-                        if (item.Item == null)
+                        if (item != null)
                         {
-                            //Randomizer.Log.LogMessage($"item.Item is null");
-                            continue;
-                        }
-                            
+                            if (item.Item == null)
+                            {
+                                //Randomizer.Log.LogMessage($"item.Item is null");
+                                continue;
+                            }
 
-                        //Randomizer.Log.LogMessage($"{item.Item}x {item.Quantity}");
-                        if (item.Item is Weapon && !Randomizer.RandomizeEnemyWeapons.Value 
-                                && !Randomizer.RandomizeEnemyItems.Value)
+
+                            //Randomizer.Log.LogMessage($"{item.Item}x {item.Quantity}");
+                            if (item.Item is Weapon && !Randomizer.RandomizeEnemyWeapons.Value
+                                    && !Randomizer.RandomizeEnemyItems.Value)
+                            {
+                                //Randomizer.Log.LogMessage("nope");
+                                continue;
+                            }
+
+                            //TODO: maybe remove the randomize enemy items if we find a way to detect & skip key items
+
+                            Randomizer.GetRandomItem(item.Item, out var item1);
+                            item.Item = item1;
+                            //Randomizer.Log.LogMessage($"now: {item.Item}");
+                        }
+                    }
+                }
+
+                // Starting Equipments
+                //Randomizer.Log.LogMessage($"startingEquipment: {__instance.m_startingEquipment}");
+                foreach (var equipment in __instance.m_startingEquipment)
+                {
+                    if (equipment != null)
+                    {
+                        //Randomizer.Log.LogMessage($"{equipment.EquipSlot}: {equipment}");
+
+                        switch (equipment.EquipSlot)
                         {
-                            //Randomizer.Log.LogMessage("nope");
-                            continue;
+                            case EquipmentSlot.EquipmentSlotIDs.RightHand:
+                            case EquipmentSlot.EquipmentSlotIDs.LeftHand:
+                                if (!Randomizer.RandomizeEnemyWeapons.Value)
+                                    continue;
+
+                                break;
+                            //TODO: quiver
+                            default:
+                                if (!Randomizer.RandomizeEnemyArmor.Value)
+                                    continue;
+
+                                break;
                         }
 
-                        //TODO: maybe remove the randomize enemy items if we find a way to detect & skip key items
+                        // first filter the list
+                        var originalType = equipment.GetType();
+                        var filtered = new List<Item>();
+                        foreach (var prefab in ResourcesPrefabManager.ITEM_PREFABS.Values)
+                        {
+                            if (prefab.GetType() == originalType && ((Equipment)prefab).EquipSlot == equipment.EquipSlot) // also check if it's a boot/chest/helmet
+                                filtered.Add(prefab);
+                        }
 
-                        Randomizer.GetRandomItem(item.Item, out var item1);
-                        item.Item = item1;
-                        //Randomizer.Log.LogMessage($"now: {item.Item}");
+                        // then get a random item from the filtered list
+                        var next = Randomizer.random.Next(0, filtered.Count);
+                        __instance.m_startingEquipment[(int)equipment.EquipSlot] = (Equipment)filtered[next];
+                        //Randomizer.Log.LogMessage($"{__instance.m_character.m_name}: now {((Equipment)filtered[next]).EquipSlot}: {filtered[next]}");
+
                     }
                 }
             }
-
-            // Starting Equipments
-            //Randomizer.Log.LogMessage($"startingEquipment: {__instance.m_startingEquipment}");
-            foreach (var equipment in __instance.m_startingEquipment)
+            catch (Exception e)
             {
-                if (equipment != null)
-                {
-                    //Randomizer.Log.LogMessage($"{equipment.EquipSlot}: {equipment}");
-                    
-                    switch (equipment.EquipSlot)
-                    {
-                        case EquipmentSlot.EquipmentSlotIDs.RightHand:
-                        case EquipmentSlot.EquipmentSlotIDs.LeftHand:
-                            if (!Randomizer.RandomizeEnemyWeapons.Value)
-                                continue;
-
-                            break;
-                        //TODO: quiver
-                        default:
-                            if (!Randomizer.RandomizeEnemyArmor.Value)
-                                continue;
-
-                            break;
-                    }
-
-                    // first filter the list
-                    var originalType = equipment.GetType();
-                    var filtered = new List<Item>();
-                    foreach (var prefab in ResourcesPrefabManager.ITEM_PREFABS.Values)
-                    {
-                        if (prefab.GetType() == originalType && ((Equipment)prefab).EquipSlot == equipment.EquipSlot) // also check if it's a boot/chest/helmet
-                            filtered.Add(prefab);
-                    }
-
-                    // then get a random item from the filtered list
-                    var next = Randomizer.random.Next(0, filtered.Count);
-                    __instance.m_startingEquipment[(int)equipment.EquipSlot] = (Equipment)filtered[next];
-                    //Randomizer.Log.LogMessage($"{__instance.m_character.m_name}: now {((Equipment)filtered[next]).EquipSlot}: {filtered[next]}");
-
-                }
+                Randomizer.Log.LogMessage($"StartingEquipmentInitPatch: {e}");
             }
         }
     }

@@ -17,7 +17,7 @@ Randomize:
 **Dropable**:
 - References the droptables, probably manages which one is called (entity->dropable->droptable).
 -  `Dropable.GenerateContents` is called at interaction time (gatherable + chests) and death time (enemies, `LootableOnDeath`)
-- referenced by `TreasureChest.DropPrefabsGen` and `Gatherable/SelfFilledItemContainer.DropPrefabs` => change those? TODO: check where the dropables are generated (or if they are only generated on new saves and then loaded from saves)
+- referenced by `TreasureChest.DropPrefabsGen` and `Gatherable/SelfFilledItemContainer.DropPrefabs` => change those
 - prefabs don't have the lists  `m_allGuaranteedDrops` + `m_mainDropTables` initialized. this is done in `InitReferences()`. conditional tables/drops are serialized
 
 **GuarantedDrop**: 
@@ -33,7 +33,8 @@ Randomize:
 **Merchant**:
 - `Merchant.m_dropableInventory`: contains dropable with droptables, set in `InitDropTableGameObject`
 - `m_merchantInventoryTablePrefab`: contains prefab
-- `WaitForItemBundleLoaded`: waits for resourcemanager, then calls init. actual set of the prefab isn't done here (probably done through resourcemanager or some unity shittery). TODO: debug to look if prefab is set at this point or even where it's set. `Initialize` is probably a good hooking point to replace the prefabs
+- `WaitForItemBundleLoaded`: waits for resourcemanager, then calls init. actual set of the prefab isn't done here (probably done through resourcemanager or some unity shittery). 
+- hook into `Initialize`
 - generates items into `MerchantPouch`
 
 **TreasureChest**:
@@ -56,6 +57,57 @@ Randomize:
 - Saved in `m_startingEquipmentTable.Equipments` or `m_startingEquipment` (mostly the later)
 - ~~hook into `InitEquipment`~~ hook into `InitItems` as we also need to change stuff in `StartingPouchItems`
 - use `m_character.m_name` as key? maybe `m_nameLocKey`?
+- problem: only uses prefab if `LastLoadedSave` != null, therefore the enemies weren't properly loaded/initialized before, so they dont have the new weapons now
+
+
+##### Finding out where weapons and armor of NPCs are loaded from:
+Info:
+- `CharacterEquipment.EquipWithoutAssociating` is not called
+
+**After** (armor & weapons aren't equipped):
+- `Character.Awake` (doesn't even have inventory)
+- `Character.ProcessInit`
+- `CharacterInventory.ProcessStart`
+- `CharacterEquipment.ProcessAwake`
+- `CharacterManager.AddCharacter`
+
+Somewhere here is the armor equipping
+
+**Mid** (armor is equipped):
+- `CharacterManager.LoadAiCharactersFromSave`
+- ``CharacterInventory.LoadCharacterSave``
+
+Somewhere here is the weapon equipping
+
+**Before** (armor & weapons are equipped):
+- `StartingEquipment.Init`
+- `Character.OnOverallLoadingDone`
+
+=> weapons loaded in `EnvironmentSave.ApplyData`->`ItemManager.LoadItems` and saved in `EnvironmentSave.PrepareSave` from `ItemManager.Instance.WorldItems` => can't do anything here though
+=> TODO: question is still: why are some "immune" to the starting equip? too far away? some other spawn shittery (because of a defeat maybe?)? is the item maybe saved wrong?
+Code for loading weapons (`ItemManager.OnReceiveItemSync`):
+![[Pasted image 20220103233830.png]]
+Example Save for weapon (Simple Bow, ID 2200000), first bow is in Pouch, second one is equipped/inventory:
+```xml
+ <BasicSaveData>
+      <Identifier xsi:type="xsd:string">thn-Tl5bB0aJsymNn-L83Q</Identifier>
+      <SyncData><?xml version="1.0" encoding="utf-16"?><Item><UID>thn-Tl5bB0aJsymNn-L83Q</UID><ID>2200000</ID><Hierarchy>1Pouch_4u_4DI0VdUyRRRiqgmciFQ;0</Hierarchy><Durability>250</Durability><ItemExtensions>WeaponLoadoutItem;-1;0</ItemExtensions><AquireTime>32.5</AquireTime><IsNew>0</IsNew><PreviousContainerUID>-</PreviousContainerUID></Item></SyncData>
+    </BasicSaveData>
+    <BasicSaveData>
+      <Identifier xsi:type="xsd:string">2P4CVxx4L0CJm7I3pWSHcQ</Identifier>
+      <SyncData><?xml version="1.0" encoding="utf-16"?><Item><UID>2P4CVxx4L0CJm7I3pWSHcQ</UID><ID>2200000</ID><Hierarchy>2w4MKaS5qRk6BOYi49mSVfQ</Hierarchy><Durability>250</Durability><ItemExtensions>WeaponLoadoutItem;-1;0</ItemExtensions><IsNew>1</IsNew><PreviousContainerUID>-</PreviousContainerUID></Item></SyncData>
+    </BasicSaveData>
+```
+armor isn't saved in in `.envc` or `worldc` files, but rather gets loaded from the npc prefab. weird that `StartingEquipment` also overwrites that armor
+
+**EnvironmentSave**:
+- saves characters in `PrepareSave`, which gets called by `SaveInstance.Save`
+- loads in `ApplyData`, which gets called by `SaveInstance.ApplyEnvironment`
+
+**CharacterManager**:
+- handles all characters in scene
+- calls `UpdateCharacterInitialization` every tick which inits peoples
+- applies save in `LoadAiCharactersFromSave`
 
 
 
