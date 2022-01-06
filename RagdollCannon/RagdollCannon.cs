@@ -20,7 +20,6 @@ namespace RagdollCannon
         // Consume Items when crafting fails: enable for Alchemy / Cooking
         public static ConfigEntry<KeyboardShortcut> launchKey;
         public static ConfigEntry<float> launchStrength;
-        public static MethodInfo methodRagdollActive = null;
 
         /// <summary>
         /// Set up Mod Configuration
@@ -41,20 +40,24 @@ namespace RagdollCannon
         /// </summary>
         private void Awake()
         {
-            Instance = this;
-            Log("Awake");
+            try
+            {
+                Instance = this;
+                Log("Awake");
 
-            // Initialize Settings
-            SetupConfig();
+                // Initialize Settings
+                SetupConfig();
 
-            // Initialize Methods
-            methodRagdollActive = typeof(Character).GetMethod("SetRagdollActive", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                // Let Harmony Patch Outward's Behavior
+                var harmony = new Harmony(ID);
+                harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            // Let Harmony Patch Outward's Behavior
-            var harmony = new Harmony(ID);
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            LocalCharacterControl_Patch.Init();
+                LocalCharacterControl_Patch.Init();
+            }
+            catch (Exception e)
+            {
+                Log($"Exception during RagdollCannon.Awake: {e}");
+            }
         }
     }
 
@@ -62,7 +65,7 @@ namespace RagdollCannon
     class LocalCharacterControl_Patch : Photon.MonoBehaviour
     {
         internal static LocalCharacterControl_Patch Instance;
-        internal const int VIEW_ID = 981; //TODO: find out how tf those are used by mods. we need a viewID for photon to work. currently it seems like we just hope for the best
+        internal const int VIEW_ID = 960; // reserved on https://github.com/Mefino/ModdingCommunityResources/blob/main/id-reservations/photon-viewid-reservations.json
         internal static void Init()
         {
             var obj = new GameObject("RagdollCannonRPC");
@@ -81,8 +84,7 @@ namespace RagdollCannon
                 var character = CharacterManager.Instance.GetCharacter(charUID);
                 //RagdollCannon.Instance.Log($"RPC Called: Setting ragdoll to {value} on {character}");
                 /* __instance.Character.SetRagdollActive(!__instance.Character.RagdollActive); */
-                RagdollCannon.methodRagdollActive.Invoke(character,
-                    new object[] { value });
+                character.SetRagdollActive(value);
             }
             catch (Exception e)
             {
@@ -91,7 +93,7 @@ namespace RagdollCannon
         }
 
         // Patches need to be outside of the BepInExPlugin
-        [HarmonyPatch(typeof(LocalCharacterControl), "UpdateInteraction")]
+        [HarmonyPatch(typeof(LocalCharacterControl), nameof(LocalCharacterControl.UpdateInteraction))]
         class LocalCharacterControl_UpdateInteraction
         {
             static void Postfix(LocalCharacterControl __instance)
@@ -111,8 +113,8 @@ namespace RagdollCannon
                         //RagdollCannon.Instance.Log($"photonView:{Instance.photonView}");
                         Instance.photonView.RPC(nameof(RagdollCannon_SetRagdoll), PhotonTargets.All, new object[]
                         {
-                        __instance.Character.UID.ToString(),
-                        value
+                            __instance.Character.UID.ToString(),
+                            value
                         });
                         //RagdollCannon.Instance.Log("Called RPC!");
 
@@ -134,7 +136,7 @@ namespace RagdollCannon
                     }
                     catch (Exception e)
                     {
-                        RagdollCannon.Instance.Log($"We done fucked up: {e.Message}");
+                        RagdollCannon.Instance.Log($"Exception during LocalCharacterControl.UpdateInteraction: {e.Message}");
                     }
                 }
             }
