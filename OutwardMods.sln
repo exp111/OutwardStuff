@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationTest", "AnimationT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Randomizer", "Randomizer\Randomizer.csproj", "{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PayWithGold", "PayWithGold\PayWithGold.csproj", "{6609AC55-078C-4D55-A379-60FF6A80D448}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugMode", "DebugMode\DebugMode.csproj", "{9F91A895-6EB9-4935-818F-91BF0CE8A6D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5450FE0-EDCF-483F-B9EA-4B1EF9D36DA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6609AC55-078C-4D55-A379-60FF6A80D448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6609AC55-078C-4D55-A379-60FF6A80D448}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6609AC55-078C-4D55-A379-60FF6A80D448}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6609AC55-078C-4D55-A379-60FF6A80D448}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F91A895-6EB9-4935-818F-91BF0CE8A6D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F91A895-6EB9-4935-818F-91BF0CE8A6D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F91A895-6EB9-4935-818F-91BF0CE8A6D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F91A895-6EB9-4935-818F-91BF0CE8A6D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

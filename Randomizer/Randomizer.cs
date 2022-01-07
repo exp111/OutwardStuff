@@ -146,7 +146,7 @@ namespace Randomizer
                 if (item.DroppedItem is Currency)
                     continue;
 
-                if (item.DroppedItem.name == "6300030_GoldIngot")
+                if (item.DroppedItem.ItemID == Currency.GoldItemID)
                     continue;
 
                 item.ItemID = GetRandomItem(item.DroppedItem, out var newItem);
