@@ -14,4 +14,6 @@
 * speed hack
 * Pay for skills with gold ingots
 * Quest + Dialog functionality in sideloader
+* Player Nametags in coop
+* Item + Photon View ID Manager
 
