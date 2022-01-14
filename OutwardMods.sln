@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugMode", "DebugMode\Debu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrapExpertise", "TrapExpertise\TrapExpertise.csproj", "{24183D9E-3D2B-4E92-B5B4-5777C42A71FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DisableDesertHaze", "DisableDesertHaze\DisableDesertHaze.csproj", "{479A957A-515E-46FE-B4F4-41226249F13E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{24183D9E-3D2B-4E92-B5B4-5777C42A71FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24183D9E-3D2B-4E92-B5B4-5777C42A71FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24183D9E-3D2B-4E92-B5B4-5777C42A71FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{479A957A-515E-46FE-B4F4-41226249F13E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{479A957A-515E-46FE-B4F4-41226249F13E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{479A957A-515E-46FE-B4F4-41226249F13E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{479A957A-515E-46FE-B4F4-41226249F13E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

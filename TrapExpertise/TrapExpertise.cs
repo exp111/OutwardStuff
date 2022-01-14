@@ -57,7 +57,7 @@ namespace TrapExpertise
 					    return;
 				    }
 			    }
-                =>
+                => //TODO: maybe rather change to a "|| this.CurrentTrapType == DeployableTrap.TrapType.Runic" to make conflicts more unlikely (with other mods)?
                 if (!this.m_hasHiddenEffects)
 			    {
                 ...
