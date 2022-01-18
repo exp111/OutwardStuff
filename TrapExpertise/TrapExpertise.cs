@@ -47,6 +47,10 @@ namespace TrapExpertise
         {
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
+
+                var fieldInfo = AccessTools.Field(typeof(DeployableTrap), nameof(DeployableTrap.m_hasHiddenEffects));
+                var callInfo = AccessTools.PropertyGetter(typeof(DeployableTrap), nameof(DeployableTrap.CurrentTrapType));
+
                 /*
                  * Remove CurrentTrapType Check from func
                 if (!this.m_hasHiddenEffects || this.CurrentTrapType != DeployableTrap.TrapType.PressurePlateTrap)
@@ -63,56 +67,35 @@ namespace TrapExpertise
                 ...
                 }
                 */
-                var found = false;
-                var startIndex = -1;
-                var endIndex = -1;
 
-                var codes = new List<CodeInstruction>(instructions);
-                var fieldInfo = AccessTools.Field(typeof(DeployableTrap), nameof(DeployableTrap.m_hasHiddenEffects));
-                var callInfo = AccessTools.PropertyGetter(typeof(DeployableTrap), nameof(DeployableTrap.CurrentTrapType));
-                Label? jumpTarget = null;
-                for (var i = 0; i < codes.Count; i++)
-                {
-                    // First find the start // if (!this.m_hasHiddenEffects ...
-                    if (!found && codes[i].opcode == OpCodes.Ldfld)
-                    {
-                        if (codes[i].LoadsField(fieldInfo))
-                        {
-                            found = true;
-                            startIndex = i + 2; // jump over cur and next (which is a jump)
-                            continue;
-                        }
-                    }
-                    // Then look for the end // this.CurrentTrapType != DeployableTrap.TrapType.PressurePlateTrap)
-                    if (found && codes[i].opcode == OpCodes.Call)
-                    {
-                        if (i < startIndex)
-                            continue;
+                var cur = new CodeMatcher(instructions);
+                // First find the start // if (!this.m_hasHiddenEffects ...
+                cur.MatchForward(false,
+                    new CodeMatch(OpCodes.Ldfld, fieldInfo))
+                .Advance(2); // jump over cur and next (which is a jump)
 
-                        if (!codes[i].Calls(callInfo))
-                            continue;
+                var start = cur.Pos;
 
-                        endIndex = i + 2; // plus the next two (cmp target and the cmp jmp itself)
-                        // copy the jmp target from the jmp
-                        jumpTarget = (Label) codes[endIndex].operand;
-                        // No need to look further, go out
-                        break;
-                    }
-                }
+                // Then look for the end // this.CurrentTrapType != DeployableTrap.TrapType.PressurePlateTrap)
+                cur.MatchForward(false,
+                    new CodeMatch(OpCodes.Call, callInfo))
+                .Advance(2);
 
-                // Then remove that shit
-                if (startIndex > -1 && endIndex > -1)
-                {
-                    // we need to jump away from this shit
-                    codes[endIndex] = new CodeInstruction(OpCodes.Br, jumpTarget);
-                    codes.RemoveRange(startIndex, endIndex - startIndex); // this deletes everything but the last line
-                }
+                var end = cur.Pos;
+                // copy the target for later (as we need to jump out)
+                var jumpTarget = (Label)cur.Operand;
 
-                /*foreach (var code in codes)
+                // we need to jump away from this shit
+                cur.SetInstruction(new CodeInstruction(OpCodes.Br, jumpTarget));
+                // Then remove that shit (except the jump instruction at the end)
+                cur.RemoveInstructionsInRange(start, end - 1);
+
+                var e = cur.InstructionEnumeration();
+                /*foreach (var code in e)
                 {
                     Log.LogMessage(code);
                 }*/
-                return codes.AsEnumerable();
+                return e;
             }
         }
     }
