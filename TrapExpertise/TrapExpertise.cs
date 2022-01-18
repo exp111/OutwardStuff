@@ -61,11 +61,24 @@ namespace TrapExpertise
 					    return;
 				    }
 			    }
+                IL_0018: ldarg.0
+		        IL_0019: ldfld     bool DeployableTrap::m_hasHiddenEffects
+		        IL_001E: brfalse.s IL_0029
+		        IL_0020: ldarg.0
+		        IL_0021: call      instance valuetype DeployableTrap/TrapType DeployableTrap::get_CurrentTrapType()
+		        IL_0026: ldc.i4.1
+		        IL_0027: beq.s     IL_0041
+
                 => //TODO: maybe rather change to a "|| this.CurrentTrapType == DeployableTrap.TrapType.Runic" to make conflicts more unlikely (with other mods)?
                 if (!this.m_hasHiddenEffects)
 			    {
                 ...
                 }
+
+                IL_0018: ldarg.0
+		        IL_0019: ldfld     bool DeployableTrap::m_hasHiddenEffects
+		        IL_001E: brfalse.s IL_0029
+                IL_0020: br IL_0041
                 */
 
                 var cur = new CodeMatcher(instructions);
