@@ -1,4 +1,11 @@
 ## Item Spawn Randomizer
+## TODO
+- fix enemies sometimes being saves/spawned with the default weapon
+- transmorphic dies in chersonne loading screen?
+- randomizes ultimate backpack items (held by the backpack) => probably because of no localplayer check in `StartingEquipmentInitPatch`
+- add true random option (don't set a seed at all?)
+
+## Details
 Randomize:
 - Chest Drops
 - Item Drops from enemies

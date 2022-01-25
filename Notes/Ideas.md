@@ -1,7 +1,7 @@
 * Allow Trogs to sit => needs AnimationController override, see [[Custom Animations]]
 * mounts => also needs animations
 * ~~Item Randomizer~~ => [[Item Randomizer]]
-* Mob Spawn Randomizer
+* Mob Spawn/Enemy Randomizer
 * Spell/Effect Randomizer
 * Instanced loot
 * unlimited pets
@@ -10,12 +10,18 @@
 * amogus outfit (dropped from amogus gang npcs? + quest?)
 * make merchants/npcs attackable, be able to talk to random npcs, more quests in cities => more believable cities
 * void mage skill tree (teleportation and stuff)
-* teleport stones
+* teleport stones + wormhole potion thing?
 * more defeat scenarios
 * speed hack
 * Pay for skills with gold ingots
 * Quest + Dialog functionality in sideloader
-* Player Nametags in coop
 * Item + Photon View ID Manager
 * First person view
+* harmattan quest start condition removal + time limit removal => [[Quest Time Limits]]
+* fix fast travel mod unlocking all cities + questline makes it cheaper
+* remove invisible walls around the maps (or make them passthrough)
+* npc/spell/item that returns your backpack to you (for money or smth)
+* custom map markers (double click to set)
+* backpack throw skill
+* ragdoll cannon momentum based dmg
 

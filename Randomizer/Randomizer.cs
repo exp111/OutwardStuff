@@ -31,6 +31,7 @@ namespace Randomizer
         public static ConfigEntry<bool> RandomizeEnemyArmor;
         public static ConfigEntry<bool> RandomizeEnemyItems;
         public static ConfigEntry<bool> RandomizeContainers; //TODO: rather RandomizeLoot?
+        public static ConfigEntry<bool> RandomizeTrueRandom;
 
         public static ConfigEntry<bool> RestrictSameCategory;
         //TODO: seed
@@ -51,7 +52,7 @@ namespace Randomizer
                 var harmony = new Harmony(ID);
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-                Log.LogMessage($"Initialized!");
+                Log.LogMessage("Initialized!");
             }
             catch (Exception e)
             {
@@ -78,6 +79,8 @@ namespace Randomizer
             RandomizeEnemyArmor = Config.Bind("General", "Randomize Enemy Armor", true, "Randomize enemy armor.");
             RandomizeEnemyItems = Config.Bind("General", "Randomize Enemy Items", false, "Randomize all spawned enemy items. This may lead to loss of items like dropped keys.");
             RandomizeContainers = Config.Bind("General", "Randomize Containers", true, "Randomize containers like treasure chests or junk piles.");
+            RandomizeTrueRandom = Config.Bind("General", "True Random", false, "Randomize every loot table completely random (even same enemy types will drop different things).");
+
 
             // Filter Options
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
@@ -134,7 +137,7 @@ namespace Randomizer
             }
 
             var ret = item.ItemID;
-            //Log.LogMessage($"[RANDOM] Generated {item} ({ret})");
+            //Log.LogMessage($"[RANDOM] Generated {item} ({ret}) instead of {original}");
             return ret;
         }
 
@@ -164,8 +167,11 @@ namespace Randomizer
                     return;
 
                 // Microsoft docs say that this is "fairly expensive" (generating a new random) but my testing said otherwise
-                var seed = $"{RandomizerSeed.Value}_{dropable.name}";
-                random = new Random(seed.GetHashCode()); //TODO: check if the hash code is deterministic
+                if (!RandomizeTrueRandom.Value)
+                {
+                    var seed = $"{RandomizerSeed.Value}_{dropable.name}";
+                    random = new Random(seed.GetHashCode()); //TODO: check if the hash code is deterministic
+                }
                 //Log.LogMessage($"Dropable: {dropable}");
 
                 // as the reference lists aren't init'ed yet, we need to manuallly collect them
@@ -213,7 +219,7 @@ namespace Randomizer
             }
             catch (Exception e)
             {
-                Log.LogMessage($"Dropable: {e}");
+                Log.LogMessage($"Exception during RandomizeDropable: {e}");
             }
         }
 
@@ -249,14 +255,15 @@ namespace Randomizer
                 if (!Randomizer.RandomizeMerchants.Value)
                     return;
 
-                //Randomizer.Log.LogMessage($"merchant.initialize: instance: {__instance}, UID: {__instance.HolderUID}");
+                //Randomizer.Log.LogMessage($"Merchant.Initialize: instance: {__instance}, UID: {__instance.HolderUID}");
                 var prefabTransform = __instance.m_merchantInventoryTablePrefab;
                 var dropable = prefabTransform.GetComponent<Dropable>();
                 Randomizer.RandomizeDropable(dropable);
+                //Randomizer.Log.LogMessage("Merchant.Initialize: end");
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"MerchantInitializePatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during MerchantInitializePatch: {e}");
             }
         }
     }
@@ -299,10 +306,11 @@ namespace Randomizer
                 {
                     Randomizer.RandomizeDropable(dropable);
                 }
+                //Randomizer.Log.LogMessage("SelfFilledItemContainer.InitDrops: end");
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"SelfFilledItemContainerInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during SelfFilledItemContainerInitPatch: {e}");
             }
         }
     }
@@ -330,10 +338,11 @@ namespace Randomizer
                     //Randomizer.Log.LogMessage($"LootDrop: {drop} (Instantiated: {drop.Instantiated})");
                     Randomizer.RandomizeDropable(drop.Dropper);
                 }
+                //Randomizer.Log.LogMessage("LootableOnDeath.Start: end");
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"LootableOnDeathInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during LootableOnDeathInitPatch: {e}");
             }
         }
     }
@@ -355,10 +364,11 @@ namespace Randomizer
                 {
                     Randomizer.RandomizeDropable(dropable);
                 }
+                //Randomizer.Log.LogMessage("TreasureChest.InitDrops: end");
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"TreasureChestInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during TreasureChestInitPatch: {e}");
             }
         }
     }
@@ -372,6 +382,8 @@ namespace Randomizer
             try
             {
                 //TODO: do we need a localplayer check? or is this a feature
+                if (__instance.m_character.IsLocalPlayer)
+                    return;
 
                 //TODO: also randomize StartingPouchItems?
 
@@ -380,8 +392,11 @@ namespace Randomizer
                     Randomizer.Log.LogMessage($"TODO: startingEquipmentTable: {__instance.m_startingEquipmentTable.Equipments}");
 
                 // Set seed
-                var seed = $"{Randomizer.RandomizerSeed.Value}_{__instance.m_character.m_name}";
-                Randomizer.random = new Random(seed.GetHashCode());
+                if (!Randomizer.RandomizeTrueRandom.Value)
+                {
+                    var seed = $"{Randomizer.RandomizerSeed.Value}_{__instance.m_character.m_name}";
+                    Randomizer.random = new Random(seed.GetHashCode());
+                }
 
                 // Starting Pouch Items
                 if (__instance.StartingPouchItems != null)
@@ -397,12 +412,10 @@ namespace Randomizer
                                 continue;
                             }
 
-
                             //Randomizer.Log.LogMessage($"{item.Item}x {item.Quantity}");
                             if (item.Item is Weapon && !Randomizer.RandomizeEnemyWeapons.Value
                                     && !Randomizer.RandomizeEnemyItems.Value)
                             {
-                                //Randomizer.Log.LogMessage("nope");
                                 continue;
                             }
 
@@ -422,7 +435,6 @@ namespace Randomizer
                     if (equipment != null)
                     {
                         //Randomizer.Log.LogMessage($"{equipment.EquipSlot}: {equipment}");
-
                         switch (equipment.EquipSlot)
                         {
                             case EquipmentSlot.EquipmentSlotIDs.RightHand:
@@ -455,10 +467,11 @@ namespace Randomizer
 
                     }
                 }
+                //Randomizer.Log.LogMessage("StartingEquipment.InitItems: end");
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"StartingEquipmentInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during StartingEquipmentInitPatch: {e}");
             }
         }
     }

@@ -51,7 +51,7 @@ namespace FailedRecipes
         [HarmonyPatch(typeof(CraftingMenu), nameof(CraftingMenu.CraftingDone))]
         class CraftingMenu_CraftingDone_Patch
         {
-            [HarmonyDebug]
+            //[HarmonyDebug]
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 try
@@ -139,16 +139,6 @@ namespace FailedRecipes
                         {
                             Item failedRecipeResult = ItemManager.Instance.GetFailedRecipeResult(__instance.m_craftingStationType);
                             if (failedRecipeResult)
-                            {
-                                Item item = ItemManager.Instance.GenerateItemNetwork(failedRecipeResult.ItemID);
-                                this.LocalCharacter.Inventory.TakeItem(item, false);
-                                string loc = LocalizationManager.Instance.GetLoc("Notification_Item_Received", new string[]
-                                {
-                                    "1",
-                                    item.Name
-                                });
-                                this.LocalCharacter.CharacterUI.ShowInfoNotification(loc, item);
-                            }
                             ...
                         }
 
@@ -194,10 +184,10 @@ namespace FailedRecipes
                         );
 
                     var e = cur.InstructionEnumeration();
-                    foreach (var code in e)
+                    /*foreach (var code in e)
                     {
                         Log.LogMessage(code);
-                    }
+                    }*/
                     return e;
                 }
                 catch (Exception e)
