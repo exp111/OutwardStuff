@@ -21,7 +21,8 @@
 * fix fast travel mod unlocking all cities + questline makes it cheaper
 * remove invisible walls around the maps (or make them passthrough)
 * npc/spell/item that returns your backpack to you (for money or smth)
-* custom map markers (double click to set)
 * backpack throw skill
 * ragdoll cannon momentum based dmg
+* transform weapon (can transform into different weapon types)
+* synced old woman moan in berg (important)
 

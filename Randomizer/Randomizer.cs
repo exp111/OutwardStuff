@@ -146,6 +146,9 @@ namespace Randomizer
             //TODO: add key item filter
             foreach (var item in itemDrops)
             {
+                if (item == -1) // this may happen?
+                    continue;
+
                 if (item.DroppedItem is Currency)
                     continue;
 
@@ -381,7 +384,7 @@ namespace Randomizer
         {
             try
             {
-                //TODO: do we need a localplayer check? or is this a feature
+                // do we need a localplayer check? or is this a feature
                 if (__instance.m_character.IsLocalPlayer)
                     return;
 
@@ -413,11 +416,11 @@ namespace Randomizer
                             }
 
                             //Randomizer.Log.LogMessage($"{item.Item}x {item.Quantity}");
-                            if (item.Item is Weapon && !Randomizer.RandomizeEnemyWeapons.Value
-                                    && !Randomizer.RandomizeEnemyItems.Value)
-                            {
+                            // it's a weapon + randomize weapons disabled? dont (weapons may be in the starting items)
+                            if (item.Item is Weapon && !Randomizer.RandomizeEnemyWeapons.Value)
                                 continue;
-                            }
+                            else if (!Randomizer.RandomizeEnemyItems.Value) // any other item? check config
+                                continue;
 
                             //TODO: maybe remove the randomize enemy items if we find a way to detect & skip key items
 
@@ -451,20 +454,66 @@ namespace Randomizer
                                 break;
                         }
 
+                        // check if its a monster weapon
+                        var monsterWeapon = false;
+                        // helper method that checks if a tag list contains a monster weapon
+                        bool isMonsterWeapon(IList<Tag> tags)
+                        {
+                            foreach (var tag in tags)
+                            {
+                                //Randomizer.Log.LogMessage($"checking tag {tag}, {tag.TagName}");
+                                if (tag.TagName == "MonsterWeapon")
+                                {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        // tags arent init yet, so we need to suck em out of the tagsrc
+                        var equip = __instance.m_character.GetComponentInChildren<Equipment>();
+                        if (equip != null)
+                        {
+                            var tagSrc = equip.m_tagSource;
+                            if (tagSrc != null)
+                            {
+                                if (isMonsterWeapon(tagSrc.Tags))
+                                    monsterWeapon = true;
+                            }
+                        }
+
                         // first filter the list
                         var originalType = equipment.GetType();
                         var filtered = new List<Item>();
                         foreach (var prefab in ResourcesPrefabManager.ITEM_PREFABS.Values)
                         {
-                            if (prefab.GetType() == originalType && ((Equipment)prefab).EquipSlot == equipment.EquipSlot) // also check if it's a boot/chest/helmet
-                                filtered.Add(prefab);
+                            if (prefab.GetType() != originalType) // only same type
+                                continue;
+
+                            if (((Equipment)prefab).EquipSlot != equipment.EquipSlot) // also check if it's a boot/chest/helmet
+                                continue;
+
+                            // monster weapon check
+                            if (isMonsterWeapon(prefab.Tags))
+                            {
+                                // if we have a monster weapon, dont give it to humans (cause they mostly cant hit with it)
+                                if (!monsterWeapon)
+                                    continue;
+                            }
+                            else
+                            {
+                                // only replace original monster weapon with monster weapons (so monsters wont have fucky visuals)
+                                if (monsterWeapon)
+                                    continue;
+                            }
+
+                            filtered.Add(prefab);
                         }
 
                         // then get a random item from the filtered list
                         var next = Randomizer.random.Next(0, filtered.Count);
                         __instance.m_startingEquipment[(int)equipment.EquipSlot] = (Equipment)filtered[next];
                         //Randomizer.Log.LogMessage($"{__instance.m_character.m_name}: now {((Equipment)filtered[next]).EquipSlot}: {filtered[next]}");
-
                     }
                 }
                 //Randomizer.Log.LogMessage("StartingEquipment.InitItems: end");
