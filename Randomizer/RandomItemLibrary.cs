@@ -154,7 +154,6 @@ namespace Randomizer
                     if (!WeaponsByType[weaponType].ContainsKey(type))
                         return original;
 
-                    Randomizer.Log.LogMessage($"{weaponType}:{type.Name}");
                     List<Item> list = WeaponsByType[weaponType][type];
                     ret = list[seed.Next(0, list.Count)];
                 }
@@ -164,7 +163,6 @@ namespace Randomizer
                     if (!EquipmentBySlot[slot].ContainsKey(type))
                         return original;
 
-                    Randomizer.Log.LogMessage($"{slot}:{type.Name}");
                     List<Item> list = EquipmentBySlot[slot][type];
                     ret = list[seed.Next(0, list.Count)];
                 }
