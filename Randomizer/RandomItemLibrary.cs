@@ -141,7 +141,7 @@ namespace Randomizer
             if (original.HasTag(MonsterWeaponTag))
             {
                 int next = seed.Next(0, MonsterWeapons.Length);
-                ret = MonsterWeapons[next];
+                return MonsterWeapons[next];
             }
 
             Type type = original.GetType();
