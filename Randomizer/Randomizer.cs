@@ -309,7 +309,6 @@ namespace Randomizer
                             continue;
 
                         itemQty.Item = RandomItemLibrary.Randomize(Randomizer.random, origItem, Randomizer.RestrictSameCategory.Value, true);
-                        Randomizer.Log.LogMessage($"Randomizing starting item from {itemQty.Quantity}x {origItem.Name} to {itemQty.Item.Name}.");
 
                         // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
                         if (origItem is Weapon)
@@ -321,7 +320,6 @@ namespace Randomizer
                                     if (state.RequiredWeapon[i] == origItem)
                                     {
                                         state.RequiredWeapon[i] = itemQty.Item as Weapon;
-                                        Randomizer.Log.LogMessage($"\tFixed AISCombat required weapon reference");
                                         break;
                                     }
                                 }
@@ -356,7 +354,6 @@ namespace Randomizer
 
                         Item origItem = __instance.m_startingEquipment[(int)equipment.EquipSlot];
                         Equipment item = RandomItemLibrary.Randomize(Randomizer.random, equipment, true, true) as Equipment;
-                        Randomizer.Log.LogMessage($"Randomizing equipment from {__instance.m_startingEquipment[(int)equipment.EquipSlot].Name} to {item.Name}");
                         __instance.m_startingEquipment[(int)equipment.EquipSlot] = item;
 
                         // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
@@ -369,7 +366,6 @@ namespace Randomizer
                                     if (state.RequiredWeapon[i] == origItem)
                                     {
                                         state.RequiredWeapon[i] = item as Weapon;
-                                        Randomizer.Log.LogMessage($"\tFixed AISCombat required weapon reference");
                                         break;
                                     }
                                 }
