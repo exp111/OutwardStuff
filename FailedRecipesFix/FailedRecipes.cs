@@ -14,7 +14,7 @@ namespace FailedRecipes
     {
         const string ID = "com.exp111.failedrecipes";
         const string NAME = "FailedRecipes";
-        const string VERSION = "1.0";
+        const string VERSION = "1.0.1";
 
 
         // Consume Items when crafting fails: enable for Alchemy / Cooking
@@ -59,12 +59,12 @@ namespace FailedRecipes
                     var cur = new CodeMatcher(instructions);
                     /*
                     // Add config check to skip instead of destroying ingredients
-                    if (num != -1 || this.m_craftingStationType != Recipe.CraftingType.Survival)
+                    if (num != -1 || this.m_currentlyDisplayedCraftingType != Recipe.CraftingType.Survival)
                     {
                     ...
 
                     IL_0041: ldarg.0
-                    IL_0042: ldfld     valuetype Recipe/CraftingType CraftingMenu::m_craftingStationType
+                    IL_0042: ldfld     valuetype Recipe/CraftingType CraftingMenu::m_currentlyDisplayedCraftingType
                     IL_0047: ldc.i4.2
                     IL_0048: beq       IL_0181
 
@@ -79,12 +79,12 @@ namespace FailedRecipes
 
                     */
 
-                    var CraftingMenu_craftingStationType = AccessTools.Field(typeof(CraftingMenu), nameof(CraftingMenu.m_craftingStationType));
+                    var CraftingMenu_m_currentlyDisplayedCraftingType = AccessTools.Field(typeof(CraftingMenu), nameof(CraftingMenu.m_currentlyDisplayedCraftingType));
 
                     // first find the second part of the if check // || this.m_craftingStationType != Recipe.CraftingType.Survival)
                     cur.MatchForward(false,
                         new CodeMatch(OpCodes.Ldarg_0),
-                        new CodeMatch(OpCodes.Ldfld, CraftingMenu_craftingStationType),
+                        new CodeMatch(OpCodes.Ldfld, CraftingMenu_m_currentlyDisplayedCraftingType),
                         new CodeMatch(OpCodes.Ldc_I4_2)
                         );
                     var start = cur.Pos;
@@ -98,8 +98,8 @@ namespace FailedRecipes
                         new CodeInstruction(OpCodes.Ldarg_0), // put "this" on the stack
                         Transpilers.EmitDelegate<Func<CraftingMenu, bool>>((menu) =>
                         {
-                            if (menu.m_craftingStationType == Recipe.CraftingType.Alchemy && !bDontConsumeItemsFailedAlchemy.Value
-                                || menu.m_craftingStationType == Recipe.CraftingType.Cooking && !bDontConsumeItemsFailedCooking.Value)
+                            if (menu.m_currentlyDisplayedCraftingType == Recipe.CraftingType.Alchemy && !bDontConsumeItemsFailedAlchemy.Value
+                                || menu.m_currentlyDisplayedCraftingType == Recipe.CraftingType.Cooking && !bDontConsumeItemsFailedCooking.Value)
                             {
                                 return true; // should run code
                             }
@@ -111,7 +111,7 @@ namespace FailedRecipes
 
                     /*
                     // Add config check to send notification and quit out instead of adding food waste
-                    Item failedRecipeResult = ItemManager.Instance.GetFailedRecipeResult(__instance.m_craftingStationType);
+                    Item failedRecipeResult = ItemManager.Instance.GetFailedRecipeResult(__instance.m_currentlyDisplayedCraftingType);
                     if (failedRecipeResult)
                     {
                         Item item = ItemManager.Instance.GenerateItemNetwork(failedRecipeResult.ItemID);
@@ -128,16 +128,16 @@ namespace FailedRecipes
                     IL_0359: br IL_0413
                     IL_035E: call      class ItemManager ItemManager::get_Instance() [LABEL]
                     IL_0363: ldarg.0
-                    IL_0364: ldfld valuetype Recipe/CraftingType CraftingMenu::m_craftingStationType
+                    IL_0364: ldfld valuetype Recipe/CraftingType CraftingMenu::m_currentlyDisplayedCraftingType
                     =>
-                        if (this.m_craftingStationType == Recipe.CraftingType.Alchemy && bDontConsumeItemsFailedAlchemy.Value
-                                || this.m_craftingStationType == Recipe.CraftingType.Cooking && bDontConsumeItemsFailedCooking.Value)
+                        if (this.m_currentlyDisplayedCraftingType == Recipe.CraftingType.Alchemy && bDontConsumeItemsFailedAlchemy.Value
+                                || this.m_currentlyDisplayedCraftingType == Recipe.CraftingType.Cooking && bDontConsumeItemsFailedCooking.Value)
                             {
                                 this.LocalCharacter.CharacterUI.ShowInfoNotificationLoc("Notification_Crafting_InvalidCombination");
                             }
                         else
                         {
-                            Item failedRecipeResult = ItemManager.Instance.GetFailedRecipeResult(__instance.m_craftingStationType);
+                            Item failedRecipeResult = ItemManager.Instance.GetFailedRecipeResult(__instance.m_currentlyDisplayedCraftingType);
                             if (failedRecipeResult)
                             ...
                         }
@@ -150,7 +150,7 @@ namespace FailedRecipes
                     IL_0XXX  brtrue IL_0413
                     IL_035E: call      class ItemManager ItemManager::get_Instance()
                     IL_0363: ldarg.0
-                    IL_0364: ldfld valuetype Recipe/CraftingType CraftingMenu::m_craftingStationType
+                    IL_0364: ldfld valuetype Recipe/CraftingType CraftingMenu::m_currentlyDisplayedCraftingType
                     */
 
                     var ItemManagerInstanceGet = AccessTools.PropertyGetter(typeof(ItemManager), nameof(ItemManager.Instance));
@@ -171,8 +171,8 @@ namespace FailedRecipes
                     cur.InsertAndAdvance(loadThis);
                     var ifCheck = Transpilers.EmitDelegate<Func<CraftingMenu, bool>>((menu) =>
                     {
-                        if (menu.m_craftingStationType == Recipe.CraftingType.Alchemy && bDontConsumeItemsFailedAlchemy.Value
-                                || menu.m_craftingStationType == Recipe.CraftingType.Cooking && bDontConsumeItemsFailedCooking.Value)
+                        if (menu.m_currentlyDisplayedCraftingType == Recipe.CraftingType.Alchemy && bDontConsumeItemsFailedAlchemy.Value
+                                || menu.m_currentlyDisplayedCraftingType == Recipe.CraftingType.Cooking && bDontConsumeItemsFailedCooking.Value)
                         {
                             menu.LocalCharacter.CharacterUI.ShowInfoNotificationLoc("Notification_Crafting_InvalidCombination");
                             return true; // skip original code/"else"
