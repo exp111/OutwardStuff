@@ -31,6 +31,7 @@ namespace AnimationTest
             try
             {
                 var basePath = Paths.PluginPath;
+                // loads the bundle "com.exp111.animationtest" from "BepInEx/plugins/AnimationTest/"
                 var path = Path.Combine(basePath, "AnimationTest", "com.exp111.animationtest");
                 Logger.LogInfo(path);
                 var assetBundle = AssetBundle.LoadFromFile(path);
