@@ -1,10 +1,11 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -93,6 +94,18 @@ namespace Randomizer
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
         }
 
+        [Conditional("DEBUG")]
+        public static void DebugLog(string message)
+        {
+            Log.LogMessage(message);
+        }
+
+        [Conditional("TRACE")]
+        public static void DebugTrace(string message)
+        {
+            Log.LogMessage(message);
+        }
+
         // Generates a random 8 letter string
         private static string GetRandomSeed()
         {
@@ -132,23 +145,24 @@ namespace Randomizer
                     var seed = $"{RandomizerSeed.Value}_{dropable.name}";
                     random = new Random(seed.GetHashCode()); //TODO: check if the hash code is deterministic.
                 }
-                //Log.LogMessage($"Dropable: {dropable}");
+                DebugTrace($"Dropable: {dropable}");
 
                 // Guaranteed Drops
-                //Log.LogMessage($"{guaranteedDrops} ({guaranteedDrops.Length} Elements)");
-                foreach (var drop in dropable.m_allGuaranteedDrops)
+                var guaranteedDrops = dropable.m_allGuaranteedDrops;
+                DebugTrace($"{guaranteedDrops} ({guaranteedDrops.Count} Elements)");
+                foreach (var drop in guaranteedDrops)
                 {
-                    //Log.LogMessage($"- {ItemListToString(drops)}");
+                    DebugTrace($"- {ItemListToString(drop.m_itemDrops)}");
                     RandomizeDropTable(drop.m_itemDrops);
                 }
 
                 // Drop Tables
-                var dropTables = dropable.GetComponentsInChildren<DropTable>();
-                //Log.LogMessage($"dropTables: {dropTables} ({dropTables.Length} Elements)");
-                foreach (var drop in dropable.m_mainDropTables)
+                var dropTables = dropable.m_mainDropTables;
+                DebugTrace($"dropTables: {dropTables} ({dropTables.Count} Elements)");
+                foreach (var drop in dropTables)
                 {
                     var drops = drop.m_itemDrops;
-                    //Log.LogMessage($"- {ItemListToString(drops)}");
+                    DebugTrace($"- {ItemListToString(drops)}");
                     RandomizeDropTable(drops);
                 }
 
@@ -200,9 +214,9 @@ namespace Randomizer
                 if (!Randomizer.RandomizeMerchants.Value)
                     return;
 
-                //Randomizer.Log.LogMessage($"Merchant.Initialize: instance: {__instance}, UID: {__instance.HolderUID}");
+                Randomizer.DebugLog($"Merchant.Initialize: instance: {__instance}, UID: {__instance.HolderUID}");
                 Randomizer.RandomizeDropable(__instance.DropableInventory);
-                //Randomizer.Log.LogMessage("Merchant.Initialize: end");
+                Randomizer.DebugLog("Merchant.Initialize: end");
             }
             catch (Exception e)
             {
@@ -224,10 +238,12 @@ namespace Randomizer
                 else if (__instance is not Gatherable && !Randomizer.RandomizeContainers.Value)
                     return;
 
+                Randomizer.DebugLog($"SelfFilledItemContainer.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
                 foreach (Dropable dropable in __instance.m_drops)
                 {
                     Randomizer.RandomizeDropable(dropable);
                 }
+                Randomizer.DebugLog("SelfFilledItemContainer.InitDrops: end");
             }
             catch (Exception e)
             {
@@ -247,12 +263,19 @@ namespace Randomizer
                 if (!Randomizer.RandomizeEnemyDrops.Value)
                     return;
 
-                foreach (var drop in __instance.m_lootDroppers)
+                Randomizer.DebugLog($"LootableOnDeath.Start: instance: {__instance}, UID: {__instance.Character}");
+                foreach (var drop in __instance.m_skinDroppers)
                 {
-                    //Randomizer.Log.LogMessage($"LootDrop: {drop} (Instantiated: {drop.Instantiated})");
+                    Randomizer.DebugTrace($"SkinDrop: {drop}");
                     Randomizer.RandomizeDropable(drop);
                 }
-                //Randomizer.Log.LogMessage("LootableOnDeath.Start: end");
+
+                foreach (var drop in __instance.m_lootDroppers)
+                {
+                    Randomizer.DebugTrace($"LootDrop: {drop}");
+                    Randomizer.RandomizeDropable(drop);
+                }
+                Randomizer.DebugLog("LootableOnDeath.Start: end");
             }
             catch (Exception e)
             {
@@ -273,9 +296,7 @@ namespace Randomizer
                 if (__instance.m_character.IsLocalPlayer)
                     return;
 
-                //TODO: also randomize StartingPouchItems?
-
-                //Randomizer.Log.LogMessage($"StartingEquipment.InitItems: instance: {__instance} for {__instance.m_character}");
+                Randomizer.DebugLog($"StartingEquipment.InitItems: instance: {__instance} for {__instance.m_character}");
                 if (__instance.m_startingEquipmentTable != null) //TODO: is this deprecated? does anyone use it? maybe use OverrideStartingEquipments?
                     Randomizer.Log.LogMessage($"TODO: startingEquipmentTable: {__instance.m_startingEquipmentTable.Equipments}");
 
@@ -291,7 +312,7 @@ namespace Randomizer
                 // Starting Pouch Items
                 if (__instance.StartingPouchItems != null)
                 {
-                    //Randomizer.Log.LogMessage($"StartingPouchItems: {__instance.StartingPouchItems} ({__instance.StartingPouchItems.Count} Elements)");
+                    Randomizer.DebugTrace($"StartingPouchItems: {__instance.StartingPouchItems} ({__instance.StartingPouchItems.Count} Elements)");
                     foreach (var itemQty in __instance.StartingPouchItems)
                     {
                         if (itemQty == null)
@@ -329,12 +350,12 @@ namespace Randomizer
                 }
 
                 // Starting Equipments
-                //Randomizer.Log.LogMessage($"startingEquipment: {__instance.m_startingEquipment}");
+                Randomizer.DebugTrace($"startingEquipment: {__instance.m_startingEquipment}");
                 foreach (var equipment in __instance.m_startingEquipment)
                 {
                     if (equipment != null)
                     {
-                        //Randomizer.Log.LogMessage($"{equipment.EquipSlot}: {equipment}");
+                        Randomizer.DebugTrace($"{equipment.EquipSlot}: {equipment}");
                         switch (equipment.EquipSlot)
                         {
                             case EquipmentSlot.EquipmentSlotIDs.RightHand:
@@ -373,7 +394,7 @@ namespace Randomizer
                         }
                     }
                 }
-                //Randomizer.Log.LogMessage("StartingEquipment.InitItems: end");
+                Randomizer.DebugLog("StartingEquipment.InitItems: end");
 
                 Randomizer.Instance.StartCoroutine(DelayedAnimFix(__instance.m_character));
             }

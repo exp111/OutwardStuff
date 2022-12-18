@@ -1,6 +1,6 @@
 {
     "name": "TrapExpertise",
-    "version_number": "1.0.0",
+    "version_number": "1.0.1",
     "website_url": "https://github.com/exp111/OutwardStuff",
     "description": "Effects of Pressure Plate Expertise also affect tripwire traps.",
     "dependencies": ["BepInEx-BepInExPack_Outward-5.4.18"]

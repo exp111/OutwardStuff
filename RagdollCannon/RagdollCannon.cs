@@ -12,7 +12,7 @@ namespace RagdollCannon
     {
         const string ID = "com.exp111.ragdollcanon";
         const string NAME = "RagdollCanon";
-        const string VERSION = "1.0";
+        const string VERSION = "1.0.1";
 
 
         public static RagdollCannon Instance;

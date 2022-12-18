@@ -1,5 +1,5 @@
 * Allow Trogs to sit => needs AnimationController override, see [[Custom Animations]]
-* mounts => also needs animations
+* mounts => also needs animations => take https://github.com/Grim-/Outward.Mount and make it less cbt
 * ~~Item Randomizer~~ => [[Item Randomizer]]
 * Mob Spawn/Enemy Randomizer
 * Spell/Effect Randomizer

@@ -20,7 +20,7 @@ namespace DebugMode
         // Choose a NAME for your project, generally the same as your Assembly Name.
         public const string NAME = "DebugMode";
         // Increment the VERSION when you release a new version of your mod.
-        public const string VERSION = "1.0.0";
+        public const string VERSION = "1.0.1";
 
         public static ConfigEntry<bool> EnableTPCommand;
         public static ConfigEntry<bool> ShowHierarchyViewer;
@@ -28,6 +28,7 @@ namespace DebugMode
 
         public static ManualLogSource Log;
 
+        //TODO: is this whole mod obsolete now that we've got /toggleDebug?
         void Awake()
         {
             try
@@ -54,7 +55,7 @@ namespace DebugMode
 
         public static void ApplyConfig()
         {
-            Global.TeleportCommandEnabled = EnableTPCommand.Value;
+            //Global.TeleportCommandEnabled = EnableTPCommand.Value;
             SetHierarchyViewer(ShowHierarchyViewer.Value);
             SetPhotonStats(ShowPhotonStats.Value);
         }
