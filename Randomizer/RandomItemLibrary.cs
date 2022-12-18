@@ -138,6 +138,7 @@ namespace Randomizer
 
             Item ret;
 
+            // monster weapons only return monster weapons
             if (original.HasTag(MonsterWeaponTag))
             {
                 int next = seed.Next(0, MonsterWeapons.Length);

@@ -1,9 +1,8 @@
 ## Item Spawn Randomizer
 ## TODO
-- fix enemies sometimes being saves/spawned with the default weapon
+- fix enemies sometimes being saves/spawned with the default weapon (this also applies)
 - transmorphic dies in chersonne loading screen?
 - randomizes ultimate backpack items (held by the backpack) => probably because of no localplayer check in `StartingEquipmentInitPatch`
-- true random should maybe randomize everytime you pick something up. that would require hooks at the pick up points. it's cbt
 - fix enchanted weapons spawning their non enchanted part when picked up
 - some enemies get their original armor/weapon
 - fix enemies spinning sometimes (call Character.FixAnimationBugCheat after equipping/setting new armor?)
