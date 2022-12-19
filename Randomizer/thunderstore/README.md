@@ -17,8 +17,16 @@ Known issues:
 - Enemies sometimes still have their original weapon in their inventory (even though I overwrite that)
 - Enemies sometimes spawn with their original weapon/armor after being loaded from a save (feel like I can't do much. Outward's save system is weird)
 
+If you have any other issue, please open an issue on GitHub (linked above)
+
 Changelog: 
-1.1 (Sinai did the heavy lifting here, so thanks for that <3)
+1.1.1:
+- Fixed monsters getting non monster weapons and thereby causing freezes during loading
+- Modded items are now generated again
+- Filtered some additional dev items
+- Mod now logs seed for debug purposes
+
+1.1: (Sinai did the heavy lifting here, so thanks for that <3)
 - True Random now works even without changing areas
 - Items are now filtered so you (hopefully) won't get broken items anymore
 - The mod should run and load faster now

@@ -104,7 +104,8 @@ namespace Randomizer
         // Only used when building our cache. Use Blacklist.Contains(item) otherwise.
         static bool ShouldBlacklist(Item item)
         {
-            if (item.ItemID < 2000000 // <- these are dev items
+            if ((item.ItemID < 2000000 // <- these are dev items
+                && item.ItemID > 0) // don't outright blacklist modded items
                 || item is Skill  // we dont want to give people any of these types of items, right? (Skill, etc)
                 || item is Building
                 || item is Quest
@@ -115,6 +116,7 @@ namespace Randomizer
                 || ManualBlacklistIDs.Contains(item.ItemID)
                 || item.ItemID.ToString().StartsWith("5600") // <- keys and special items
                 || item.Name.Trim() == "-" // <- unfinished items
+                || item.Description.Trim() == "-" // <- mostly used for placed tents/crafting stations
                 || item.Name.Contains("stat boost", StringComparison.OrdinalIgnoreCase) // <- used to give enemies more stats
                 || item.Name.Contains("removed", StringComparison.OrdinalIgnoreCase) // <- unfinished items
                 || (item is Equipment equipment 

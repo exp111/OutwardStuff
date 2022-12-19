@@ -79,6 +79,7 @@ namespace Randomizer
             // Generate a random seed if it's our first time/we got an empty seed
             if (RandomizerSeed.Value == (string)RandomizerSeed.DefaultValue)
                 RandomizerSeed.Value = GetRandomSeed();
+            Log.LogMessage($"Seed: {RandomizerSeed.Value}");
 
             // Randomize
             RandomizeMerchants = Config.Bind("General", "Randomize Merchants", true, "Randomize merchant inventories.");
@@ -94,6 +95,23 @@ namespace Randomizer
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
         }
 
+        // only used during debug
+        private static Stopwatch debugStopwatch = null;
+
+        [Conditional("DEBUG")]
+        public static void StartTimer()
+        {
+            if (debugStopwatch == null)
+                debugStopwatch = new();
+
+            debugStopwatch.Restart();
+        }
+        [Conditional("DEBUG")]
+        public static void StopTimer()
+        {
+            debugStopwatch.Stop();
+            DebugLog($"Elapsed: {debugStopwatch.ElapsedMilliseconds} ms");
+        }
         [Conditional("DEBUG")]
         public static void DebugLog(string message)
         {
@@ -128,6 +146,7 @@ namespace Randomizer
             if (GUILayout.Button("Random", GUILayout.ExpandWidth(true)))
             {
                 entry.BoxedValue = GetRandomSeed();
+                Log.LogMessage($"Changed seed to: {(string)entry.BoxedValue}");
             }
         }
 
@@ -188,6 +207,7 @@ namespace Randomizer
                     continue;
 
                 Item item = RandomItemLibrary.Randomize(random, drop.ItemRef, RestrictSameCategory.Value);
+                DebugTrace($"Generated: {item.Name}, ({item.ItemID})");
                 drop.ItemID = item.ItemID;
                 drop.ItemRef = item;
             }
@@ -195,8 +215,9 @@ namespace Randomizer
 
         public static string ItemListToString<T>(List<T> items) where T : BasicItemDrop
         {
-            return string.Join(", ", items.Select(it => it == null || it?.ItemID == -1
-                                                        ? "<invalid ID>"
+            // ive recently only got dropable with itemID = -1, while ItemRef is still set, so just skip checking the itemid
+            return string.Join(", ", items.Select(it => it == null || it.DroppedItem == null
+                                                        ? "<invalid item>"
                                                         : it.DroppedItem.DisplayName));
         }
     }
@@ -214,9 +235,11 @@ namespace Randomizer
                 if (!Randomizer.RandomizeMerchants.Value)
                     return;
 
+                Randomizer.StartTimer();
                 Randomizer.DebugLog($"Merchant.Initialize: instance: {__instance}, UID: {__instance.HolderUID}");
                 Randomizer.RandomizeDropable(__instance.DropableInventory);
-                Randomizer.DebugLog("Merchant.Initialize: end");
+                Randomizer.DebugLog($"Merchant.Initialize: end");
+                Randomizer.StopTimer();
             }
             catch (Exception e)
             {
@@ -238,12 +261,14 @@ namespace Randomizer
                 else if (__instance is not Gatherable && !Randomizer.RandomizeContainers.Value)
                     return;
 
+                Randomizer.StartTimer();
                 Randomizer.DebugLog($"SelfFilledItemContainer.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
                 foreach (Dropable dropable in __instance.m_drops)
                 {
                     Randomizer.RandomizeDropable(dropable);
                 }
                 Randomizer.DebugLog("SelfFilledItemContainer.InitDrops: end");
+                Randomizer.StopTimer();
             }
             catch (Exception e)
             {
@@ -263,6 +288,7 @@ namespace Randomizer
                 if (!Randomizer.RandomizeEnemyDrops.Value)
                     return;
 
+                Randomizer.StartTimer();
                 Randomizer.DebugLog($"LootableOnDeath.Start: instance: {__instance}, UID: {__instance.Character}");
                 foreach (var drop in __instance.m_skinDroppers)
                 {
@@ -276,6 +302,7 @@ namespace Randomizer
                     Randomizer.RandomizeDropable(drop);
                 }
                 Randomizer.DebugLog("LootableOnDeath.Start: end");
+                Randomizer.StopTimer();
             }
             catch (Exception e)
             {
@@ -296,6 +323,7 @@ namespace Randomizer
                 if (__instance.m_character.IsLocalPlayer)
                     return;
 
+                Randomizer.StartTimer();
                 Randomizer.DebugLog($"StartingEquipment.InitItems: instance: {__instance} for {__instance.m_character}");
                 if (__instance.m_startingEquipmentTable != null) //TODO: is this deprecated? does anyone use it? maybe use OverrideStartingEquipments?
                     Randomizer.Log.LogMessage($"TODO: startingEquipmentTable: {__instance.m_startingEquipmentTable.Equipments}");
@@ -322,7 +350,7 @@ namespace Randomizer
                         if (!origItem)
                             continue;
 
-                        //Randomizer.Log.LogMessage($"{item.Item}x {item.Quantity}");
+                        Randomizer.DebugTrace($"{itemQty.Item}x {itemQty.Quantity}");
                         // it's a weapon + randomize weapons disabled? dont (weapons may be in the starting items)
                         if (origItem is Weapon && !Randomizer.RandomizeEnemyWeapons.Value)
                             continue;
@@ -330,6 +358,7 @@ namespace Randomizer
                             continue;
 
                         itemQty.Item = RandomItemLibrary.Randomize(Randomizer.random, origItem, Randomizer.RestrictSameCategory.Value, true);
+                        Randomizer.DebugTrace($"Generated: {itemQty.Item.Name}, ({itemQty.Item.ItemID})");
 
                         // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
                         if (origItem is Weapon)
@@ -373,18 +402,20 @@ namespace Randomizer
                                 break;
                         }
 
-                        Item origItem = __instance.m_startingEquipment[(int)equipment.EquipSlot];
-                        Equipment item = RandomItemLibrary.Randomize(Randomizer.random, equipment, true, true) as Equipment;
+                        // the tags aren't inited on the starting equipment, so we gotta get them from the real item
+                        Item prefab = ResourcesPrefabManager.Instance.GetItemPrefab(equipment.ItemID);
+                        Equipment item = RandomItemLibrary.Randomize(Randomizer.random, prefab, true, true) as Equipment;
+                        Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID})");
                         __instance.m_startingEquipment[(int)equipment.EquipSlot] = item;
 
                         // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
-                        if (origItem is Weapon)
+                        if (equipment is Weapon)
                         {
                             foreach (var state in combatStates)
                             {
                                 for (int i = 0; i < state.RequiredWeapon.Length; i++)
                                 {
-                                    if (state.RequiredWeapon[i] == origItem)
+                                    if (state.RequiredWeapon[i] == equipment)
                                     {
                                         state.RequiredWeapon[i] = item as Weapon;
                                         break;
@@ -395,6 +426,7 @@ namespace Randomizer
                     }
                 }
                 Randomizer.DebugLog("StartingEquipment.InitItems: end");
+                Randomizer.StopTimer();
 
                 Randomizer.Instance.StartCoroutine(DelayedAnimFix(__instance.m_character));
             }

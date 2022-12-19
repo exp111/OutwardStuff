@@ -22,7 +22,9 @@
 * remove invisible walls around the maps (or make them passthrough)
 * npc/spell/item that returns your backpack to you (for money or smth)
 * backpack throw skill
-* ragdoll cannon momentum based dmg
-* transform weapon (can transform into different weapon types)
+* ragdoll cannon momentum based dmg => do into skill? (needs landing sensor to make better)
+* transform weapon (can transform into different weapon types, bloodborne/mh like)
 * synced old woman moan in berg (important)
+* ~~loading screen time logger~~ => natively implemented in NetworkLevelLoader.FinishLoadLevel via Debug.Log
+* druid transform into mob spell/class
 
