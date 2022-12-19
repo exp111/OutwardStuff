@@ -25,7 +25,7 @@ namespace Randomizer
 
         public static Random random = new();
 
-        public static ConfigEntry<string> RandomizerSeed; //TODO: generate random seed
+        public static ConfigEntry<string> RandomizerSeed;
 
         public static ConfigEntry<bool> RandomizeMerchants;
         public static ConfigEntry<bool> RandomizeGatherables;
@@ -37,10 +37,8 @@ namespace Randomizer
         public static ConfigEntry<bool> RandomizeTrueRandom;
 
         public static ConfigEntry<bool> RestrictSameCategory;
-        //TODO: seed
 
-        // Droptable name to existing droptable //TODO: save as what? string array? ItemDrop list? //TODO: remove this?
-        //public static Dictionary<string, string> DropTableMap = new Dictionary<string, string>();
+        public static ConfigEntry<bool> RandomizeKeys;
 
         // Awake is called when your plugin is created. Use this to set up your mod.
         internal void Awake()
@@ -93,6 +91,9 @@ namespace Randomizer
 
             // Filter Options
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
+
+            RandomizeKeys = Config.Bind("Filters", "Randomize Keys", false, "Randomize keys and other special items (this means that keys will not drop from the enemies/containers that usually drop them. They also may never drop).");
+            RandomizeKeys.SettingChanged += (_, _) => RandomItemLibrary.GenerateCache();
         }
 
         // only used during debug

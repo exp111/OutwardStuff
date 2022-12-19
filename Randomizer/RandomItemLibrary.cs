@@ -40,6 +40,11 @@ namespace Randomizer
             // Wait one frame in case items are being setup at OnPacksLoaded.
             yield return null;
 
+            GenerateCache();
+        }
+
+        public static void GenerateCache()
+        {
             MonsterWeaponTag = TagSourceManager.Instance.GetTag("196");
             Stopwatch sw = new();
             sw.Start();
@@ -97,7 +102,7 @@ namespace Randomizer
             AllItems = allItems.ToArray();
             MonsterWeapons = monsterWeapons.ToArray();
 
-            Randomizer.Log.LogMessage($"Randomizer initialized item library in {sw.ElapsedMilliseconds} milliseconds.");
+            Randomizer.Log.LogMessage($"Initialized item library in {sw.ElapsedMilliseconds} milliseconds.");
             sw.Stop();
         }
 
@@ -114,7 +119,7 @@ namespace Randomizer
                 || item is WrittenNote
                 || item.HasDefaultIcon  // <- HasDefaultIcon means the item has no icon, ie probably not a finished item
                 || ManualBlacklistIDs.Contains(item.ItemID)
-                || item.ItemID.ToString().StartsWith("5600") // <- keys and special items
+                || (item.ItemID.ToString().StartsWith("5600") && !Randomizer.RandomizeKeys.Value) // <- keys and special items
                 || item.Name.Trim() == "-" // <- unfinished items
                 || item.Description.Trim() == "-" // <- mostly used for placed tents/crafting stations
                 || item.Name.Contains("stat boost", StringComparison.OrdinalIgnoreCase) // <- used to give enemies more stats
