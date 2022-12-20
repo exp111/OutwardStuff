@@ -20,15 +20,14 @@ namespace DebugMode
         // Choose a NAME for your project, generally the same as your Assembly Name.
         public const string NAME = "DebugMode";
         // Increment the VERSION when you release a new version of your mod.
-        public const string VERSION = "1.0.1";
+        public const string VERSION = "1.1";
 
-        public static ConfigEntry<bool> EnableTPCommand;
+        public static ConfigEntry<bool> EnableDebug;
         public static ConfigEntry<bool> ShowHierarchyViewer;
         public static ConfigEntry<bool> ShowPhotonStats;
 
         public static ManualLogSource Log;
 
-        //TODO: is this whole mod obsolete now that we've got /toggleDebug?
         void Awake()
         {
             try
@@ -37,7 +36,7 @@ namespace DebugMode
                 Log.LogMessage("Awake");
 
                 // Setup Config
-                EnableTPCommand = Config.Bind("General", "Enable Teleport Command", false);
+                EnableDebug = Config.Bind("General", "Enable Debug", true);
                 ShowHierarchyViewer = Config.Bind("General", "Show Hierarchy Viewer", false);
                 ShowPhotonStats = Config.Bind("General", "Show Photon Stats", false);
 
@@ -55,7 +54,7 @@ namespace DebugMode
 
         public static void ApplyConfig()
         {
-            //Global.TeleportCommandEnabled = EnableTPCommand.Value;
+            Global.CheatsEnabled = EnableDebug.Value;
             SetHierarchyViewer(ShowHierarchyViewer.Value);
             SetPhotonStats(ShowPhotonStats.Value);
         }
@@ -98,20 +97,30 @@ namespace DebugMode
     }
 
     [HarmonyPatch(typeof(Global), nameof(Global.Awake))] // Can't use ProcessDebug cause it may not be called if we dont have a DEBUG.txt
-    class Global_ProcessDebug_Patch
+    class Global_Awake_Patch
     {
         [HarmonyPostfix]
         public static void Postfix()
         {
             try
             {
-                Global.CheatsEnabled = true;
                 DebugMode.ApplyConfig();
             }
             catch (Exception e)
             {
                 DebugMode.Log.LogMessage($"Exception during Global.Awake hook: {e}");
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(Global), nameof(Global.ProcessDebug))]
+    class Global_ProcessDebug_Patch
+    {
+        [HarmonyPrefix]
+        public static bool Prefix()
+        {
+            // Skip original debug function if its called
+            return false;
         }
     }
 }

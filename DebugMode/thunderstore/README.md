@@ -1,7 +1,7 @@
-Enables Debug mode without needing the DEBUG.txt in the Outward_Data folder.
-Also allows to enable/disable the other debug options like:
-- Teleport Commands (teleport with `/tp <position>`)
+Enables Debug mode without needing the DEBUG.txt in the Outward Definitive Edition_Data folder.
+Also allows to enable/disable debug options like:
+- Debug Mode
 - Photon Stats
 - Hierarchy Viewer
 
-Shouldn't conflict with the existing DEBUG.txt file.
+Ignores any existing debug file in favour of this mod.
