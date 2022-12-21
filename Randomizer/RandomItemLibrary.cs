@@ -2,9 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Randomizer
 {
@@ -119,7 +116,7 @@ namespace Randomizer
                 || item is WrittenNote
                 || item.HasDefaultIcon  // <- HasDefaultIcon means the item has no icon, ie probably not a finished item
                 || ManualBlacklistIDs.Contains(item.ItemID)
-                || (item.ItemID.ToString().StartsWith("5600") && !Randomizer.RandomizeKeys.Value) // <- keys and special items
+                || (!Randomizer.RandomizeKeys.Value && item.ItemID.ToString().StartsWith("5600")) // <- keys and special items
                 || item.Name.Trim() == "-" // <- unfinished items
                 || item.Description.Trim() == "-" // <- mostly used for placed tents/crafting stations
                 || item.Name.Contains("stat boost", StringComparison.OrdinalIgnoreCase) // <- used to give enemies more stats
@@ -194,6 +191,7 @@ namespace Randomizer
                 }
             }
 
+            // FIXME: this is probably completely useless?
             if (original.GetExtension(nameof(MultipleUsage)) is MultipleUsage origMulti
                 && ret.GetExtension(nameof(MultipleUsage)) is MultipleUsage newMulti)
             {
@@ -201,6 +199,48 @@ namespace Randomizer
             }
 
             return ret;
+        }
+
+        // If we've got a stackable item that is being transformed into a non stackable
+        //  clamp the drop amount to 1 so we dont get 60 different item stacks
+        public static void ClampDropAmount<T>(T drop, Item item) where T : BasicItemDrop
+        {
+            // No need to clamp if only one item is dropped anyways
+            if (drop.MaxDropCount <= 1)
+                return;
+
+            if (IsStackable(drop.ItemRef, item))
+            {
+                Randomizer.DebugTrace($"Clamped Item {drop.ItemRef} (now {item} ) from {drop.MinDropCount}-{drop.MaxDropCount} to {Math.Min(drop.MinDropCount, 1)}-1");
+                drop.MinDropCount = Math.Min(drop.MinDropCount, 1); // 0 || 1
+                drop.MaxDropCount = 1;
+            }
+        }
+
+        public static void ClampDropAmount(ItemQuantity drop, Item item)
+        {
+            // No need to clamp if only one item is dropped anyways
+            if (drop.Quantity <= 1)
+                return;
+
+            if (IsStackable(drop.Item, item))
+            {
+                Randomizer.DebugTrace($"Clamped Item {drop.Item} (now {item}) from {drop.Quantity} to {Math.Min(drop.Quantity, 1)}");
+                drop.Quantity = Math.Min(drop.Quantity, 1); // 0 || 1
+            }
+        }
+
+        private static bool IsStackable(Item drop, Item item)
+        {
+            // drop itemref hasnt gotten cached info, so m_stackable isnt set, get it manually
+            var mStackable = drop.GetComponent<MultipleUsage>();
+            var dropIsStackable = mStackable != null; //TODO: also check AutoStack?
+
+            var itemStackable = item.GetComponent<MultipleUsage>();
+            var itemIsStackable = itemStackable != null;
+
+            return (dropIsStackable && !itemIsStackable) || // arrows and stuff
+                (drop.GroupItemInDisplay && !item.GroupItemInDisplay); // smth like gaberries
         }
     }
 }

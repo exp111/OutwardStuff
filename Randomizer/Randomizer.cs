@@ -208,7 +208,8 @@ namespace Randomizer
                     continue;
 
                 Item item = RandomItemLibrary.Randomize(random, drop.ItemRef, RestrictSameCategory.Value);
-                DebugTrace($"Generated: {item.Name}, ({item.ItemID})");
+                DebugTrace($"Generated: {item.Name} ({item.ItemID}) for {drop.ItemRef.Name} ({drop.ItemRef.ItemID})");
+                RandomItemLibrary.ClampDropAmount(drop, item);
                 drop.ItemID = item.ItemID;
                 drop.ItemRef = item;
             }
@@ -219,7 +220,7 @@ namespace Randomizer
             // ive recently only got dropable with itemID = -1, while ItemRef is still set, so just skip checking the itemid
             return string.Join(", ", items.Select(it => it == null || it.DroppedItem == null
                                                         ? "<invalid item>"
-                                                        : it.DroppedItem.DisplayName));
+                                                        : $"{it.DroppedItem.DisplayName} ({it.MinDropCount}-{it.MaxDropCount})"));
         }
     }
 
@@ -239,6 +240,7 @@ namespace Randomizer
                 Randomizer.StartTimer();
                 Randomizer.DebugLog($"Merchant.Initialize: instance: {__instance}, UID: {__instance.HolderUID}");
                 Randomizer.RandomizeDropable(__instance.DropableInventory);
+                //TODO: dont do this on refreshinventory but instead again on initialize? or take from dropableprefab
                 Randomizer.DebugLog($"Merchant.Initialize: end");
                 Randomizer.StopTimer();
             }
@@ -351,15 +353,17 @@ namespace Randomizer
                         if (!origItem)
                             continue;
 
-                        Randomizer.DebugTrace($"{itemQty.Item}x {itemQty.Quantity}");
+                        Randomizer.DebugTrace($"{itemQty.Quantity}x {itemQty.Item}");
                         // it's a weapon + randomize weapons disabled? dont (weapons may be in the starting items)
                         if (origItem is Weapon && !Randomizer.RandomizeEnemyWeapons.Value)
                             continue;
                         else if (!Randomizer.RandomizeEnemyItems.Value) // any other item? check config
                             continue;
 
-                        itemQty.Item = RandomItemLibrary.Randomize(Randomizer.random, origItem, Randomizer.RestrictSameCategory.Value, true);
-                        Randomizer.DebugTrace($"Generated: {itemQty.Item.Name}, ({itemQty.Item.ItemID})");
+                        var item = RandomItemLibrary.Randomize(Randomizer.random, origItem, Randomizer.RestrictSameCategory.Value, true);
+                        Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID}) for {origItem.Name} ({origItem.ItemID})");
+                        RandomItemLibrary.ClampDropAmount(itemQty, item);
+                        itemQty.Item = item;
 
                         // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
                         if (origItem is Weapon)
@@ -406,7 +410,7 @@ namespace Randomizer
                         // the tags aren't inited on the starting equipment, so we gotta get them from the real item
                         Item prefab = ResourcesPrefabManager.Instance.GetItemPrefab(equipment.ItemID);
                         Equipment item = RandomItemLibrary.Randomize(Randomizer.random, prefab, true, true) as Equipment;
-                        Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID})");
+                        Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID}) for {prefab.Name} ({prefab.ItemID})");
                         __instance.m_startingEquipment[(int)equipment.EquipSlot] = item;
 
                         // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
