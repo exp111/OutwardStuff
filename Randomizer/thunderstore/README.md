@@ -20,6 +20,9 @@ Known issues:
 If you have any other issue, please open an issue on GitHub (linked above)
 
 Changelog: 
+1.1.2:
+- Limited the quantity of randomized non stackable items, so they don't fill up inventories that much anymore
+
 1.1.1:
 - Fixed monsters getting non monster weapons and thereby causing freezes during loading
 - Modded items are now generated again
