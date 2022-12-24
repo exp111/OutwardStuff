@@ -35,6 +35,7 @@ namespace Randomizer
         internal static IEnumerator Init()
         {
             // Wait one frame in case items are being setup at OnPacksLoaded.
+            Randomizer.DebugTrace("Initializing RandomItemLibrary...");
             yield return null;
 
             GenerateCache();
@@ -42,94 +43,110 @@ namespace Randomizer
 
         public static void GenerateCache()
         {
-            MonsterWeaponTag = TagSourceManager.Instance.GetTag("196");
-            Stopwatch sw = new();
-            sw.Start();
-
-            Blacklist = new();
-            AllFilteredItems = new();
-            EquipmentBySlot = new();
-            WeaponsByType = new();
-
-            List<Item> allItems = new();
-            List<Item> monsterWeapons = new();
-            foreach (var item in ResourcesPrefabManager.ITEM_PREFABS.Values)
+            try
             {
-                if (item.HasTag(MonsterWeaponTag))
+                Randomizer.DebugTrace("Generating Cache...");
+                MonsterWeaponTag = TagSourceManager.Instance.GetTag("196");
+                Stopwatch sw = new();
+                sw.Start();
+
+                Blacklist = new();
+                AllFilteredItems = new();
+                EquipmentBySlot = new();
+                WeaponsByType = new();
+
+                List<Item> allItems = new();
+                List<Item> monsterWeapons = new();
+                foreach (var item in ResourcesPrefabManager.ITEM_PREFABS.Values)
                 {
-                    monsterWeapons.Add(item);
-                    continue;
+                    if (item.HasTag(MonsterWeaponTag))
+                    {
+                        monsterWeapons.Add(item);
+                        continue;
+                    }
+
+                    if (ShouldBlacklist(item))
+                    {
+                        Blacklist.Add(item.ItemID);
+                        continue;
+                    }
+
+                    allItems.Add(item);
+
+                    // Add to filtered list
+                    Type type = item.GetType();
+                    if (!AllFilteredItems.ContainsKey(type))
+                        AllFilteredItems.Add(type, new());
+                    AllFilteredItems[type].Add(item);
+
+                    // Add equipment to slot dictionary
+                    if (item is Weapon weapon)
+                    {
+                        Weapon.WeaponType weaponType = weapon.Type;
+                        if (!WeaponsByType.ContainsKey(weaponType))
+                            WeaponsByType.Add(weaponType, new());
+                        if (!WeaponsByType[weaponType].ContainsKey(type))
+                            WeaponsByType[weaponType].Add(type, new());
+                        WeaponsByType[weaponType][type].Add(item);
+                    }
+                    else if (item is Equipment equipment)
+                    {
+                        EquipmentSlot.EquipmentSlotIDs slot = equipment.EquipSlot;
+                        if (!EquipmentBySlot.ContainsKey(slot))
+                            EquipmentBySlot.Add(slot, new());
+                        if (!EquipmentBySlot[slot].ContainsKey(type))
+                            EquipmentBySlot[slot].Add(type, new());
+                        EquipmentBySlot[slot][type].Add(item);
+                    }
                 }
 
-                if (ShouldBlacklist(item))
-                {
-                    Blacklist.Add(item.ItemID);
-                    continue;
-                }
+                AllItems = allItems.ToArray();
+                MonsterWeapons = monsterWeapons.ToArray();
 
-                allItems.Add(item);
-
-                // Add to filtered list
-                Type type = item.GetType();
-                if (!AllFilteredItems.ContainsKey(type))
-                    AllFilteredItems.Add(type, new());
-                AllFilteredItems[type].Add(item);
-
-                // Add equipment to slot dictionary
-                if (item is Weapon weapon)
-                {
-                    Weapon.WeaponType weaponType = weapon.Type;
-                    if (!WeaponsByType.ContainsKey(weaponType))
-                        WeaponsByType.Add(weaponType, new());
-                    if (!WeaponsByType[weaponType].ContainsKey(type))
-                        WeaponsByType[weaponType].Add(type, new());
-                    WeaponsByType[weaponType][type].Add(item);
-                }
-                else if (item is Equipment equipment)
-                {
-                    EquipmentSlot.EquipmentSlotIDs slot = equipment.EquipSlot;
-                    if (!EquipmentBySlot.ContainsKey(slot))
-                        EquipmentBySlot.Add(slot, new());
-                    if (!EquipmentBySlot[slot].ContainsKey(type))
-                        EquipmentBySlot[slot].Add(type, new());
-                    EquipmentBySlot[slot][type].Add(item);
-                }
+                Randomizer.Log.LogMessage($"Initialized item library in {sw.ElapsedMilliseconds} milliseconds.");
+                sw.Stop();
             }
-
-            AllItems = allItems.ToArray();
-            MonsterWeapons = monsterWeapons.ToArray();
-
-            Randomizer.Log.LogMessage($"Initialized item library in {sw.ElapsedMilliseconds} milliseconds.");
-            sw.Stop();
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during RandomItemLibrary.GenerateCache: {e}");
+            }
         }
 
         // Only used when building our cache. Use Blacklist.Contains(item) otherwise.
         static bool ShouldBlacklist(Item item)
         {
-            if ((item.ItemID < 2000000 // <- these are dev items
-                && item.ItemID > 0) // don't outright blacklist modded items
-                || item is Skill  // we dont want to give people any of these types of items, right? (Skill, etc)
-                || item is Building
-                || item is Quest
-                || item is Blueprint
-                || item is CraftingStation
-                || item is WrittenNote
-                || item.HasDefaultIcon  // <- HasDefaultIcon means the item has no icon, ie probably not a finished item
-                || ManualBlacklistIDs.Contains(item.ItemID)
-                || (!Randomizer.RandomizeKeys.Value && item.ItemID.ToString().StartsWith("5600")) // <- keys and special items
-                || item.Name.Trim() == "-" // <- unfinished items
-                || item.Description.Trim() == "-" // <- mostly used for placed tents/crafting stations
-                || item.Name.Contains("stat boost", StringComparison.OrdinalIgnoreCase) // <- used to give enemies more stats
-                || item.Name.Contains("removed", StringComparison.OrdinalIgnoreCase) // <- unfinished items
-                || (item is Equipment equipment 
-                    && (equipment.RequiredPType == PlayerSystem.PlayerTypes.Trog // <- cant use trog items
-                    || !equipment.GetComponent<ItemStats>() // <- equipment has no stats
-                    || string.IsNullOrWhiteSpace(equipment.VisualPrefabPath)))) // <- equipment has no visuals
+            try
             {
-                return true; // should blacklist
-            }
+                if ((item.ItemID < 2000000 // <- these are dev items
+                    && item.ItemID > 0) // don't outright blacklist modded items
+                    || item is Skill  // we dont want to give people any of these types of items, right? (Skill, etc)
+                    || item is Building
+                    || item is Quest
+                    || item is Blueprint
+                    || item is CraftingStation
+                    || item is WrittenNote
+                    || item.HasDefaultIcon  // <- HasDefaultIcon means the item has no icon, ie probably not a finished item
+                    || ManualBlacklistIDs.Contains(item.ItemID)
+                    || (!Randomizer.RandomizeKeys.Value && item.ItemID.ToString().StartsWith("5600")) // <- keys and special items
+                    || item.Name.Trim() == "-" // <- unfinished items
+                    || item.Description.Trim() == "-" // <- mostly used for placed tents/crafting stations
+                    || item.Name.Contains("stat boost", StringComparison.OrdinalIgnoreCase) // <- used to give enemies more stats
+                    || item.Name.Contains("removed", StringComparison.OrdinalIgnoreCase) // <- unfinished items
+                    || (item is Equipment equipment
+                        && (equipment.RequiredPType == PlayerSystem.PlayerTypes.Trog // <- cant use trog items
+                        || !equipment.GetComponent<ItemStats>() // <- equipment has no stats
+                        || string.IsNullOrWhiteSpace(equipment.VisualPrefabPath)))) // <- equipment has no visuals
+                {
+                    return true; // should blacklist
+                }
 
-            return false; // dont blacklist
+                return false; // dont blacklist
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during RandomItemLibrary.ShouldBlacklist: {e}. {Environment.NewLine}Blacklisting item.");
+                return true; // blacklist cause it made some issues
+            }
         }
 
         public static Item Randomize(Random seed, Item original, bool filter, bool isStartingEquipment = false)

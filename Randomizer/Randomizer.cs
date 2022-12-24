@@ -78,6 +78,7 @@ namespace Randomizer
             if (RandomizerSeed.Value == (string)RandomizerSeed.DefaultValue)
                 RandomizerSeed.Value = GetRandomSeed();
             Log.LogMessage($"Seed: {RandomizerSeed.Value}");
+            RandomizerSeed.SettingChanged += (_,_) => Log.LogMessage($"Changed seed to: {RandomizerSeed.Value}");
 
             // Randomize
             RandomizeMerchants = Config.Bind("General", "Randomize Merchants", true, "Randomize merchant inventories.");
@@ -93,7 +94,7 @@ namespace Randomizer
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
 
             RandomizeKeys = Config.Bind("Filters", "Randomize Keys", false, "Randomize keys and other special items (this means that keys will not drop from the enemies/containers that usually drop them. They also may never drop).");
-            RandomizeKeys.SettingChanged += (_, _) => RandomItemLibrary.GenerateCache();
+            RandomizeKeys.SettingChanged += (_,_) => RandomItemLibrary.GenerateCache();
         }
 
         // only used during debug
@@ -147,7 +148,6 @@ namespace Randomizer
             if (GUILayout.Button("Random", GUILayout.ExpandWidth(true)))
             {
                 entry.BoxedValue = GetRandomSeed();
-                Log.LogMessage($"Changed seed to: {(string)entry.BoxedValue}");
             }
         }
 
