@@ -4,9 +4,12 @@
 - randomizes ultimate backpack items (held by the backpack) => probably because of no localplayer check in `StartingEquipmentInitPatch`
 - fix enchanted weapons spawning their non enchanted part when picked up
 - some enemies get their original armor/weapon => delete them?
-- fix enemies spinning sometimes (call Character.FixAnimationBugCheat after equipping/setting new armor?)
+- ~~fix enemies spinning sometimes (call Character.FixAnimationBugCheat after equipping/setting new armor?)~~ => hasnt happened again?
 - didnt randomize without config manager/in first area??
 - randomize spawned items
+- config options to not randomize bagpacks?
+- quest rewards?
+- recheck manual blacklist
 
 ## Details
 Randomize:

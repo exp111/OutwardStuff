@@ -28,4 +28,5 @@
 * ~~loading screen time logger~~ => natively implemented in NetworkLevelLoader.FinishLoadLevel via Debug.Log
 * druid transform into mob spell/class
 * unityexplorer addon with outward specific stuff like "inspect localplayer", "inspect inventory/bagpack", "show items" (maybe with a script?)
+* Gothic weapons/world/quests
 

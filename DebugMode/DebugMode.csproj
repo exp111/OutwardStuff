@@ -274,6 +274,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomDebugCmd.cs" />
     <Compile Include="DebugMode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
