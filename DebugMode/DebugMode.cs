@@ -3,11 +3,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DebugMode
@@ -27,7 +23,6 @@ namespace DebugMode
         public static ConfigEntry<bool> ShowPhotonStats;
 
         public static ManualLogSource Log;
-        public static List<CustomDebugCmd> DebugCommands;
 
         void Awake()
         {
@@ -43,8 +38,6 @@ namespace DebugMode
 
                 Config.SettingChanged += (_, e) => ApplyConfig();
 
-                LoadDebugCommands();
-
                 // Harmony is for patching methods. If you're not patching anything, you can comment-out or delete this line.
                 var harmony = new Harmony(ID);
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
@@ -52,16 +45,6 @@ namespace DebugMode
             catch (Exception e)
             {
                 Log.LogMessage($"Exception during DebugMode.Awake: {e}");
-            }
-        }
-
-        private void LoadDebugCommands()
-        {
-            //TODO: LoadDebugCommands();
-            foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
-            {
-                if (type.IsSubclassOf(typeof(CustomDebugCmd)))
-                    DebugCommands.Add((CustomDebugCmd)Activator.CreateInstance(type));
             }
         }
 
@@ -141,36 +124,6 @@ namespace DebugMode
         {
             // Skip original debug function if its called
             return false;
-        }
-    }
-
-    // Hooks into the 
-    [HarmonyPatch(typeof(ChatPanel), nameof(ChatPanel.CheckForDebugCommand))]
-    class ChatPanel_DebugCommand_Patch
-    {
-        [HarmonyPostfix]
-        public static void Prefix(ChatPanel __instance, bool __result)
-        {
-            if (!__result) // false = cmd found
-                return; // no need for us 
-
-            var command = __instance.m_chatEntry.text;
-            if (!command.StartsWith("/")) // not a chat cmd
-                return;
-
-            var args = command.Split(' ');
-
-            var func = args[0].Substring(1); // remove /
-            foreach (var cmd in DebugMode.DebugCommands)
-            {
-                if (!func.Equals(cmd.Command, StringComparison.InvariantCultureIgnoreCase))
-                    continue;
-
-                if (!Global.CheatsEnabled && cmd.Cheat)
-                    continue;
-
-                cmd.Run(args);
-            }
         }
     }
 }
