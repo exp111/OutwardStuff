@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,16 +21,13 @@ namespace Randomizer
         static readonly HashSet<int> ManualBlacklistIDs = new()
         {
             2300250, //Virgin Shield
-            2020170, //CalixaMaceGun 
-            2400540, //WolfgangRunicSword
-            2100221, //Great Bloodsword
-            2000221, //Blood Sword
-            2130230, //Blood Spear
+            2020170, //CalixaMaceGun // weird model
+            2400540, //WolfgangRunicSword //can't be picked up, disappears immediatelly
+            2100221, //Great Bloodsword // can't be picked up
+            2000221, //Blood Sword // can't be picked up
+            2130230, //Blood Spear // can't be picked up
             2150042, // Elite trog queen staff
-            2000141, // Cyrene's sword
-            2110021, 2110022, 2110023, // NPC Marble Greataxes
-            2010002, // Etheral axe
-            2400532, // grandmother reach
+            2110021, 2110022,  // NPC Marble Greataxes // can't be picked up
         };
 
         internal static IEnumerator Init()
@@ -41,11 +39,26 @@ namespace Randomizer
             GenerateCache();
         }
 
+#if DEBUG
+        // used to debug print differences
+        static HashSet<int> debugPreviousBlacklist;
+#endif
+
         public static void GenerateCache()
         {
             try
             {
                 Randomizer.DebugTrace("Generating Cache...");
+#if DEBUG
+                if (Blacklist != null)
+                {
+                    debugPreviousBlacklist = new HashSet<int>();
+                    foreach (var item in Blacklist)
+                    {
+                        debugPreviousBlacklist.Add(item);
+                    }
+                }
+#endif
                 MonsterWeaponTag = TagSourceManager.Instance.GetTag("196");
                 Stopwatch sw = new();
                 sw.Start();
@@ -103,8 +116,30 @@ namespace Randomizer
                 AllItems = allItems.ToArray();
                 MonsterWeapons = monsterWeapons.ToArray();
 
-                Randomizer.Log.LogMessage($"Initialized item library in {sw.ElapsedMilliseconds} milliseconds.");
                 sw.Stop();
+                Randomizer.Log.LogMessage($"Initialized item library in {sw.ElapsedMilliseconds} milliseconds.");
+                Randomizer.DebugLog($"Blacklist contains {Blacklist.Count} items");
+                
+#if DEBUG
+                if (debugPreviousBlacklist != null)
+                {
+                    // Check the differences
+                    List<int> added = new();
+                    foreach (var item in Blacklist)
+                    {
+                        if (!debugPreviousBlacklist.Contains(item))
+                            added.Add(item);
+                    }
+                    List<int> removed = new();
+                    foreach (var item in debugPreviousBlacklist)
+                    {
+                        if (!Blacklist.Contains(item))
+                            removed.Add(item);
+                    }
+                    Randomizer.Log.LogMessage($"Added to Blacklist: {added.Join(delimiter: ",")}");
+                    Randomizer.Log.LogMessage($"Removed from Blacklist: {removed.Join(delimiter: ",")}");
+                }
+#endif
             }
             catch (Exception e)
             {
@@ -125,7 +160,7 @@ namespace Randomizer
                     || item is Blueprint
                     || item is CraftingStation
                     || item is WrittenNote
-                    || item.HasDefaultIcon  // <- HasDefaultIcon means the item has no icon, ie probably not a finished item
+                    || (item.HasDefaultIcon && item is not Equipment)  // <- HasDefaultIcon means the item has no icon, ie probably not a finished item; exception for equipment
                     || ManualBlacklistIDs.Contains(item.ItemID)
                     || (!Randomizer.RandomizeKeys.Value && item.ItemID.ToString().StartsWith("5600")) // <- keys and special items
                     || item.Name.Trim() == "-" // <- unfinished items
@@ -135,7 +170,8 @@ namespace Randomizer
                     || (item is Equipment equipment
                         && (equipment.RequiredPType == PlayerSystem.PlayerTypes.Trog // <- cant use trog items
                         || !equipment.GetComponent<ItemStats>() // <- equipment has no stats
-                        || string.IsNullOrWhiteSpace(equipment.VisualPrefabPath)))) // <- equipment has no visuals
+                        || string.IsNullOrWhiteSpace(equipment.VisualPrefabPath))) // <- equipment has no visuals
+                        || (item.HasDefaultIcon && Randomizer.HideEquipmentNoIcon.Value))
                 {
                     return true; // should blacklist
                 }

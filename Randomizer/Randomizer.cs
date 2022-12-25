@@ -38,6 +38,7 @@ namespace Randomizer
 
         public static ConfigEntry<bool> RestrictSameCategory;
 
+        public static ConfigEntry<bool> HideEquipmentNoIcon;
         public static ConfigEntry<bool> RandomizeKeys;
 
         // Awake is called when your plugin is created. Use this to set up your mod.
@@ -92,7 +93,8 @@ namespace Randomizer
 
             // Filter Options
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
-
+            HideEquipmentNoIcon = Config.Bind("Filters", "Hide equipment with no icon", true, "Hides weapons and armor that has no icon. These are probably not meant for players to receive, but still work.");
+            HideEquipmentNoIcon.SettingChanged += (_, _) => RandomItemLibrary.GenerateCache();
             RandomizeKeys = Config.Bind("Filters", "Randomize Keys", false, "Randomize keys and other special items (this means that keys will not drop from the enemies/containers that usually drop them. They also may never drop).");
             RandomizeKeys.SettingChanged += (_,_) => RandomItemLibrary.GenerateCache();
         }
