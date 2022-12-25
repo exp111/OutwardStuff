@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace MoreChatCommands
@@ -48,6 +49,19 @@ namespace MoreChatCommands
                 if (type.IsSubclassOf(typeof(CustomDebugCmd)))
                     DebugCommands.Add((CustomDebugCmd)Activator.CreateInstance(type));
             }
+            DebugLog($"Found {DebugCommands.Count} custom commands ({DebugCommands.Join(c => c.Command)}).");
+        }
+
+        [Conditional("DEBUG")]
+        public static void DebugLog(string message)
+        {
+            Log.LogMessage(message);
+        }
+
+        [Conditional("TRACE")]
+        public static void DebugTrace(string message)
+        {
+            Log.LogMessage(message);
         }
     }
 
@@ -60,28 +74,48 @@ namespace MoreChatCommands
         {
             // INFO: return true to run original function; false => skip original
             // INFO: __result = true, is no command; false => cmd, no chat msg
+            MoreChatCommands.DebugTrace($"ChatPanel.CheckForDebugCommand start");
             try
             {
-                var command = __instance.m_chatEntry.text;
+                var command = __instance.m_chatEntry.text.Trim();
                 if (!command.StartsWith("/")) // not a chat cmd
                 {
-                    __result = true; // no cmd
-                    return false; // no need to run as we've already checked
+                    MoreChatCommands.DebugTrace("Not a command.");
+                    return true; // run because else we cant send the chat message //FIXME: why
                 }
 
                 // split cmd into arguments
                 var args = command.Split(' ');
                 // the command we wanna call
                 var func = args[0].Substring(1); // remove /
+                // check through the commands if ones matches
                 foreach (var cmd in MoreChatCommands.DebugCommands)
                 {
                     if (!func.Equals(cmd.Command, StringComparison.InvariantCultureIgnoreCase))
                         continue;
 
-                    if (!Global.CheatsEnabled && cmd.Cheat)
-                        continue;
+                    MoreChatCommands.DebugTrace($"Found command: {cmd.Command}.");
 
-                    cmd.Run(args);
+                    if (!Global.CheatsEnabled && cmd.Cheat)
+                    {
+                        __result = false; // no chat msg
+                        return false; // found cmd but its disabled, stop here
+                    }
+
+                    MoreChatCommands.DebugTrace("Running command.");
+                    try
+                    {
+                        if (!cmd.Run(args))
+                        {
+                            // used cmd incorrectly, show usage
+                            CustomDebugCmd.ChatError($"Usage:\n{cmd.Usage}");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        CustomDebugCmd.ChatError($"Something went wrong! See the log for more information.");
+                        MoreChatCommands.Log.LogMessage($"Exception while running Command {cmd.Command}: {e}");
+                    }
                     __result = false; // we found a cmd
                     return false; // no need to run anymore
                 }
@@ -90,6 +124,7 @@ namespace MoreChatCommands
             {
                 MoreChatCommands.Log.LogMessage($"Exception during ChatPanel.CheckForDebugCommand: {e}");
             }
+            MoreChatCommands.DebugTrace("Found no valid command.");
             return true; // run original as we either found nothing or something went wrong
         }
     }

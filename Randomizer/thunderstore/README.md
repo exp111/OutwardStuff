@@ -20,6 +20,10 @@ Known issues:
 If you have any other issue, please open an issue on GitHub (linked above)
 
 Changelog: 
+1.1.3:
+- Remove some items from the blacklist
+- Optionally allow equipment with no icon to be generated (only 3 currently)
+
 1.1.2:
 - Limited the quantity of randomized non stackable items, so they don't fill up inventories that much anymore
 
