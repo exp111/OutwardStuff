@@ -7,7 +7,7 @@
 - ~~fix enemies spinning sometimes (call Character.FixAnimationBugCheat after equipping/setting new armor?)~~ => hasnt happened again?
 - didnt randomize without config manager/in first area??
 - randomize spawned items
-- config options to not randomize bagpacks?
+- config options to not randomize backpack?
 - quest rewards?
 - recheck manual blacklist
 
