@@ -264,7 +264,7 @@ namespace Randomizer
 
             if (IsStackable(drop.ItemRef, item))
             {
-                Randomizer.DebugTrace($"Clamped Item {drop.ItemRef} (now {item} ) from {drop.MinDropCount}-{drop.MaxDropCount} to {Math.Min(drop.MinDropCount, 1)}-1");
+                Randomizer.DebugTrace($"Clamped Item {drop.ItemRef} (now {item}) from {drop.MinDropCount}-{drop.MaxDropCount} to {Math.Min(drop.MinDropCount, 1)}-1");
                 drop.MinDropCount = Math.Min(drop.MinDropCount, 1); // 0 || 1
                 drop.MaxDropCount = 1;
             }
