@@ -14,12 +14,14 @@ By default a random seed is generated that affects the tables. You can set it yo
 You can enable/disable most stuff in the config. Some changes won't be made directly but rather on a area reload/merchant refresh/respawn.
 
 Known issues:
-- Enemies sometimes still have their original weapon in their inventory (even though I overwrite that)
-- Enemies sometimes spawn with their original weapon/armor after being loaded from a save (feel like I can't do much. Outward's save system is weird)
+- Enemies sometimes spawn with their original weapon/armor (or no weapon equipped) after being loaded from a save
 
 If you have any other issue, please open an issue on GitHub (linked above)
 
 Changelog: 
+1.1.4:
+- Fix enemies having their original equipment in their inventory
+
 1.1.3:
 - Remove some items from the blacklist
 - Optionally allow equipment with no icon to be generated (only 3 currently)

@@ -6,3 +6,4 @@ Ideas:
 - chat history with arrow controls
 - overwrite original commands or add better error handling to them
 - item info which takes item id list and shows them pretty, spawnable
+- /learn skill => f3 is filtered

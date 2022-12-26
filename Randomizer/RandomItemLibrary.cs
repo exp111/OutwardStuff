@@ -27,7 +27,7 @@ namespace Randomizer
             2000221, //Blood Sword // can't be picked up
             2130230, //Blood Spear // can't be picked up
             2150042, // Elite trog queen staff
-            2110021, 2110022,  // NPC Marble Greataxes // can't be picked up
+            2110021, 2110022,  // NPC Marble Greataxes // can't be picked up //TODO: force physics on those?
         };
 
         internal static IEnumerator Init()
@@ -294,6 +294,28 @@ namespace Randomizer
 
             return (dropIsStackable && !itemIsStackable) || // arrows and stuff
                 (drop.GroupItemInDisplay && !item.GroupItemInDisplay); // smth like gaberries
+        }
+
+        public static void FixCombatStates(Character character, Item item, Item original)
+        {
+            // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
+            if (original is not Weapon)
+                return;
+
+            //TODO: are those maybe not saved and therefore loaded enemies lose their weapons?
+
+            var combatStates = character.GetComponentsInChildren<AISCombat>(true);
+            foreach (var state in combatStates)
+            {
+                for (int i = 0; i < state.RequiredWeapon.Length; i++)
+                {
+                    if (state.RequiredWeapon[i] == original)
+                    {
+                        state.RequiredWeapon[i] = item as Weapon;
+                        break;
+                    }
+                }
+            }
         }
     }
 }

@@ -122,7 +122,7 @@ namespace MoreChatCommands
             }
             catch (Exception e)
             {
-                MoreChatCommands.Log.LogMessage($"Exception during ChatPanel.CheckForDebugCommand: {e}");
+                MoreChatCommands.Log.LogMessage($"Exception during ChatPanel.CheckForDebugCommand hook: {e}");
             }
             MoreChatCommands.DebugTrace("Found no valid command.");
             return true; // run original as we either found nothing or something went wrong

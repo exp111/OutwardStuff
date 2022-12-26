@@ -148,3 +148,275 @@ armor isn't saved in in `.envc` or `worldc` files, but rather gets loaded from t
 
 **other**:
 - set sell value to original value?
+
+### Problem: Enemies keep original weapon + armor
+problem: all enemies have their original equipment in their inv after idea
+problem cause idea: enemy still has a reference to the original droptable somewhere
+
+debug ideas:
+- look where loot is generated in code and look which fields are (can look at runtime)
+- look directly after replacing the items if the reference is somewhere (NEEDS dnspy debug or unityexplorer?)
+- look how the startingequipment is inserted, if there is smth else
+
+#### look where loot is generated:
+`LootableOnDeath.OnDeath`:
+- makes items from pouch public by letting the player access the pouch as a loot container => original weapon should be contained there
+- also drops weapons
+- all done from `CharacterInventory.MakeLootable`
+
+test: prefix + postfix `OnDeath` and look into pouch
+```csharp
+		[HarmonyPrefix]
+        [HarmonyPriority(Priority.Last)]
+        internal static void DebugPrefix(LootableOnDeath __instance)
+        {
+            var pouch = __instance.m_character.m_inventory.m_inventoryPouch;
+            if (pouch)
+            {
+                Randomizer.DebugTrace($"Prefix Pouch items for {__instance.m_character.Name}");
+                foreach (var item in pouch.m_containedItems.Values)
+                {
+                    Randomizer.DebugTrace($"- {item.Name} ({item.ItemID})");
+                }
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.First)]
+        internal static void DebugPostfix(LootableOnDeath __instance)
+        {
+            var pouch = __instance.m_character.m_inventory.m_inventoryPouch;
+            if (pouch)
+            {
+                Randomizer.DebugTrace($"Postfix Pouch items for {__instance.m_character.Name}");
+                foreach (var item in pouch.m_containedItems.Values)
+                {
+                    Randomizer.DebugTrace($"- {item.Name} ({item.ItemID})");
+                }
+            }
+        }
+```
+=> weapon exists beforehand in pouch
+
+#### look how the startingequipment is inserted
+`StartingEquipment.InitItems`:
+- goes through `StartingPouchItems` and `m_startingEquipmentTable`+`m_startingEquipment` (in `InitEquipment`) and spawns + equips these
+
+maybe some editor prefab stuff contains the original weapon?
+test: prefix + postfix InitItems
+```cs
+[HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
+        internal static void DebugPrefix1(StartingEquipment __instance)
+        {
+            var pouch = __instance.m_character.m_inventory.m_inventoryPouch;
+            if (pouch)
+            {
+                Randomizer.DebugTrace($"First Prefix Pouch items for {__instance.m_character.Name}");
+                foreach (var item in pouch.m_containedItems.Values)
+                {
+                    Randomizer.DebugTrace($"- {item.Name} ({item.ItemID})");
+                }
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.Last)]
+        internal static void DebugPrefix2(StartingEquipment __instance)
+        {
+            var pouch = __instance.m_character.m_inventory.m_inventoryPouch;
+            if (pouch)
+            {
+                Randomizer.DebugTrace($"Prefix Last Pouch items for {__instance.m_character.Name}");
+                foreach (var item in pouch.m_containedItems.Values)
+                {
+                    Randomizer.DebugTrace($"- {item.Name} ({item.ItemID})");
+                }
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.First)]
+        internal static void DebugPostfix(StartingEquipment __instance)
+        {
+            var pouch = __instance.m_character.m_inventory.m_inventoryPouch;
+            if (pouch)
+            {
+                Randomizer.DebugTrace($"Postfix Pouch items for {__instance.m_character.Name}");
+                foreach (var item in pouch.m_containedItems.Values)
+                {
+                    Randomizer.DebugTrace($"- {item.Name} ({item.ItemID})");
+                }
+            }
+        }
+```
+=> item isnt there yet => added somewhere in between
+
+test: hook pouch item add and see what and when adds the item
+```cs
+[HarmonyPatch(typeof(ItemContainer), nameof(ItemContainer.AddItem), new Type[] { typeof(Item), typeof(bool) })]
+    static class ItemContainerAddItemPatch
+    {
+        [HarmonyPrefix]
+        internal static void Prefix(ItemContainer __instance, Item _item, bool _stackIfPossible)
+        {
+            Randomizer.DebugTrace($"Adding item {_item} ({_item.UID}) to {__instance.OwnerCharacter}");
+            Randomizer.DebugTrace(new StackTrace().ToString());
+        }
+    }
+```
+=>
+```
+[Message:Randomizer] Adding item 2400260_PearlBirdBeak_U9gxjUQ2X0 (MeleeWeapon) to PearlBird_pixBJFjn00mZUzoqjRo55g (Character)
+
+[Message:Randomizer]   at Randomizer.ItemContainerAddItemPatch.Prefix (ItemContainer __instance, Item _item, System.Boolean _stackIfPossible) [0x00000] in <bc80ab20b97d45d9b1915db2cac695e7>:0
+
+  at ItemContainer.DMD<ItemContainer::AddItem> (ItemContainer , Item , System.Boolean ) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.Store (ItemContainer _parentContainer) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.UpdateParentChange (System.Boolean _updateNewParent) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.UpdateParentChange () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.CheckHasChanged () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Equipment.CheckHasChanged () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Weapon.CheckHasChanged () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Equipment.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Weapon.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at MeleeWeapon.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.DoUpdate () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at ItemManager+<UpdateItems>d__72.MoveNext () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00000] in <ad199b1c67244da3a5ed230e5d202f21>:0
+```
+=> Weapon notices that it has been removed/not equipped => adds itself to inventory
+`ItemManager.UpdateItems` has `m_worldItems` array
+test: remove equipment from `m_worldItems`
+```cs
+						if (ItemManager.Instance.WorldItems.ContainsKey(equipment.UID))
+                        {
+                            Randomizer.DebugTrace($"worlditems contains: {equipment}. removing");
+                            ItemManager.Instance.WorldItems.Remove(equipment.UID);
+                        }
+```
+=> not contained in worlditems
+test: delete equipment
+```cs
+ItemManager.Instance.DestroyItem(equipment);
+```
+=> doesn't work either
+=> logging the replaced item shows it doesnt have a uid, so it cant be this specific instance; probably spawned somewhere else?
+is it spawned beforehand? should we go through all worlditems and look if itemid and owner matches?
+test: see which items are added to worlditems => `ItemManager.ItemHasBeenAdded`
+```cs
+	[HarmonyPatch(typeof(ItemManager), nameof(ItemManager.ItemHasBeenAdded))]
+    static class ItemManagerAddedPatch
+    {
+        [HarmonyPrefix]
+        internal static void Prefix(ItemManager __instance, Item _newItem)
+        {
+            Randomizer.DebugTrace($"ItemHasBeenAdded item {_newItem} ({_newItem.UID}) to {_newItem.OwnerCharacter}");
+            Randomizer.DebugTrace(new StackTrace().ToString());
+        }
+    }
+```
+=> added at lvl load, no owner => different to items in StartingEquipment
+```
+[Message:Randomizer] ItemHasBeenAdded item 2400260_PearlBirdBeak (MeleeWeapon) (U9gxjUQ2X0u6AthdtR3YGw) to
+
+[Message:Randomizer]   at Randomizer.ItemManagerAddedPatch.Prefix (ItemManager __instance, Item _newItem) [0x00000] in <64fdf562b3e04f1286e6838b56986926>:0
+
+  at ItemManager.DMD<ItemManager::ItemHasBeenAdded> (ItemManager , Item& ) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.RegisterUID () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.BaseInit () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Weapon.BaseInit () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.StartInit () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Equipment.StartInit () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.ProcessInit () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at ItemManager.UpdateItemInitialization () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at ItemManager.Update () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+```
+vs
+```
+[Message:Randomizer] Adding item 2400260_PearlBirdBeak_U9gxjUQ2X0 (MeleeWeapon) (U9gxjUQ2X0u6AthdtR3YGw) to PearlBird_pixBJFjn00mZUzoqjRo55g (Character)
+
+[Message:Randomizer]   at Randomizer.ItemContainerAddItemPatch.Prefix (ItemContainer __instance, Item _item, System.Boolean _stackIfPossible) [0x00000] in <64fdf562b3e04f1286e6838b56986926>:0
+
+  at ItemContainer.DMD<ItemContainer::AddItem> (ItemContainer , Item , System.Boolean ) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.Store (ItemContainer _parentContainer) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.UpdateParentChange (System.Boolean _updateNewParent) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.UpdateParentChange () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.CheckHasChanged () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Equipment.CheckHasChanged () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Weapon.CheckHasChanged () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Equipment.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Weapon.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at MeleeWeapon.UpdateProcessing () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.DoUpdate () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at ItemManager+<UpdateItems>d__72.MoveNext () [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00000] in <ad199b1c67244da3a5ed230e5d202f21>:0
+```
+=> called from UpdateItemInitialization => someone requested item initialization. `InitItems`? `CreateItemFromData`?
+test: `ItemManager.RequestItemInitialization` hook:
+```cs
+[HarmonyPatch(typeof(ItemManager), nameof(ItemManager.RequestItemInitialization))]
+    static class ItemManagerRequestInitPatch
+    {
+        [HarmonyPrefix]
+        internal static void Prefix(ItemManager __instance, Item _item)
+        {
+            Randomizer.DebugTrace($"RequestItemInitialization item {_item} ({_item.UID}) to {_item.OwnerCharacter}");
+            Randomizer.DebugTrace(new StackTrace().ToString());
+        }
+    }
+```
+=>
+```cs
+[Message:Randomizer] RequestItemInitialization item 2400260_PearlBirdBeak (MeleeWeapon) (-vLAAI0N1UWq5-XgDaI2rw) to
+
+[Message:Randomizer]   at Randomizer.ItemManagerRequestInitPatch.Prefix (ItemManager __instance, Item _item) [0x00000] in <83cf0ca9fefe482281e98bcaa0e1c7dd>:0
+
+  at ItemManager.DMD<ItemManager::RequestItemInitialization> (ItemManager , Item ) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+
+  at Item.DMD<Item::Start> (Item ) [0x00000] in <d5e04b413fbc401e8fbb9a9c16a31f0f>:0
+```
+=> dead end => or can we look which func instantiates items?
+=> `ItemManager.GenerateItem`? calls `ResourcesPrefabManager.Instance.GenerateItem`, which calls `Instantiate<Item>`
+test: hook `ItemManager.GenerateItem` => cant find item => maybe loaded from save?
+=> hook `Instantiate<T>` ?
+
+=> instead try to find out where the added item contains a reference to the parent?
+=> `EquipmentSlot` contains `m_editorEquippedItem`, which is the item we're looking at...
+=> just delete that if we're replacing the slot?

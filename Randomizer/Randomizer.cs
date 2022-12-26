@@ -79,7 +79,7 @@ namespace Randomizer
             if (RandomizerSeed.Value == (string)RandomizerSeed.DefaultValue)
                 RandomizerSeed.Value = GetRandomSeed();
             Log.LogMessage($"Seed: {RandomizerSeed.Value}");
-            RandomizerSeed.SettingChanged += (_,_) => Log.LogMessage($"Changed seed to: {RandomizerSeed.Value}");
+            RandomizerSeed.SettingChanged += (_, _) => Log.LogMessage($"Changed seed to: {RandomizerSeed.Value}");
 
             // Randomize
             RandomizeMerchants = Config.Bind("General", "Randomize Merchants", true, "Randomize merchant inventories.");
@@ -96,7 +96,7 @@ namespace Randomizer
             HideEquipmentNoIcon = Config.Bind("Filters", "Hide equipment with no icon", true, "Hides weapons and armor that has no icon. These are probably not meant for players to receive, but still work.");
             HideEquipmentNoIcon.SettingChanged += (_, _) => RandomItemLibrary.GenerateCache();
             RandomizeKeys = Config.Bind("Filters", "Randomize Keys", false, "Randomize keys and other special items (this means that keys will not drop from the enemies/containers that usually drop them. They also may never drop).");
-            RandomizeKeys.SettingChanged += (_,_) => RandomItemLibrary.GenerateCache();
+            RandomizeKeys.SettingChanged += (_, _) => RandomItemLibrary.GenerateCache();
         }
 
         // only used during debug
@@ -248,7 +248,7 @@ namespace Randomizer
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"Exception during MerchantInitializePatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during Merchant.RefreshInventory hook: {e}");
             }
         }
     }
@@ -267,17 +267,17 @@ namespace Randomizer
                     return;
 
                 Randomizer.StartTimer();
-                Randomizer.DebugLog($"SelfFilledItemContainer.InitDrops: instance: {__instance}, UID: {__instance.HolderUID}");
+                Randomizer.DebugLog($"SelfFilledItemContainer.ProcessGenerateContent: instance: {__instance}, UID: {__instance.HolderUID}");
                 foreach (Dropable dropable in __instance.m_drops)
                 {
                     Randomizer.RandomizeDropable(dropable);
                 }
-                Randomizer.DebugLog("SelfFilledItemContainer.InitDrops: end");
+                Randomizer.DebugLog("SelfFilledItemContainer.ProcessGenerateContent: end");
                 Randomizer.StopTimer();
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"Exception during SelfFilledItemContainerInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during SelfFilledItemContainer.ProcessGenerateContent hook: {e}");
             }
         }
     }
@@ -294,7 +294,8 @@ namespace Randomizer
                     return;
 
                 Randomizer.StartTimer();
-                Randomizer.DebugLog($"LootableOnDeath.Start: instance: {__instance}, UID: {__instance.Character}");
+                Randomizer.DebugLog($"LootableOnDeath.OnDeath: instance: {__instance}, UID: {__instance.Character}");
+                //INFO: m_skinDroppers and m_lootDroppers are inferred from SkinDrops/LootDrops on LootableOnDeath.Awake, so we need to use those
                 foreach (var drop in __instance.m_skinDroppers)
                 {
                     Randomizer.DebugTrace($"SkinDrop: {drop}");
@@ -306,18 +307,18 @@ namespace Randomizer
                     Randomizer.DebugTrace($"LootDrop: {drop}");
                     Randomizer.RandomizeDropable(drop);
                 }
-                Randomizer.DebugLog("LootableOnDeath.Start: end");
+                Randomizer.DebugLog("LootableOnDeath.OnDeath: end");
                 Randomizer.StopTimer();
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"Exception during LootableOnDeathInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during LootableOnDeath.OnDeath hook: {e}");
             }
         }
     }
 
     [HarmonyPatch(typeof(StartingEquipment), nameof(StartingEquipment.InitItems))]
-    static class StartingEquipmentInitPatch //FIXME: some enemies "skip" the starting Equipment and use the normal weapons
+    static class StartingEquipmentInitPatch //FIXME: some enemies "skip" the starting Equipment and use the normal weapons when loaded from the environment save
     {
         [HarmonyPrefix]
         internal static void Prefix(StartingEquipment __instance)
@@ -340,8 +341,6 @@ namespace Randomizer
                     Randomizer.random = new Random(seed.GetHashCode());
                 }
 
-                AISCombat[] combatStates = __instance.m_character.GetComponentsInChildren<AISCombat>(true);
-
                 // Starting Pouch Items
                 if (__instance.StartingPouchItems != null)
                 {
@@ -349,7 +348,7 @@ namespace Randomizer
                     foreach (var itemQty in __instance.StartingPouchItems)
                     {
                         if (itemQty == null)
-                           continue;
+                            continue;
 
                         Item origItem = itemQty.Item;
                         if (!origItem)
@@ -366,22 +365,7 @@ namespace Randomizer
                         Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID}) for {origItem.Name} ({origItem.ItemID})");
                         RandomItemLibrary.ClampDropAmount(itemQty, item);
                         itemQty.Item = item;
-
-                        // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
-                        if (origItem is Weapon)
-                        {
-                            foreach (var state in combatStates)
-                            {
-                                for (int i = 0; i < state.RequiredWeapon.Length; i++)
-                                {
-                                    if (state.RequiredWeapon[i] == origItem)
-                                    {
-                                        state.RequiredWeapon[i] = itemQty.Item as Weapon;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        RandomItemLibrary.FixCombatStates(__instance.m_character, item, origItem);
                     }
                 }
 
@@ -414,21 +398,16 @@ namespace Randomizer
                         Equipment item = RandomItemLibrary.Randomize(Randomizer.random, prefab, true, true) as Equipment;
                         Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID}) for {prefab.Name} ({prefab.ItemID})");
                         __instance.m_startingEquipment[(int)equipment.EquipSlot] = item;
+                        RandomItemLibrary.FixCombatStates(__instance.m_character, item, equipment);
 
-                        // If orig item was a weapon used by an AI Combat state, replace the reference to our new item.
-                        if (equipment is Weapon)
+                        // if we've got a editor item, it will spawn even though we have the startingequipment
+                        // so we've gotta delete/remove that, so it wont be added later into the inventory
+                        var realEquipSlot = __instance.m_character.Inventory.Equipment.EquipmentSlots[(int)equipment.EquipSlot];
+                        if (realEquipSlot.m_editorEquippedItem)
                         {
-                            foreach (var state in combatStates)
-                            {
-                                for (int i = 0; i < state.RequiredWeapon.Length; i++)
-                                {
-                                    if (state.RequiredWeapon[i] == equipment)
-                                    {
-                                        state.RequiredWeapon[i] = item as Weapon;
-                                        break;
-                                    }
-                                }
-                            }
+                            Randomizer.DebugTrace($"Deleting editor item: {realEquipSlot.m_editorEquippedItem}");
+                            ItemManager.Instance.DestroyItem(realEquipSlot.m_editorEquippedItem);
+                            realEquipSlot.m_editorEquippedItem = null;
                         }
                     }
                 }
@@ -439,10 +418,10 @@ namespace Randomizer
             }
             catch (Exception e)
             {
-                Randomizer.Log.LogMessage($"Exception during StartingEquipmentInitPatch: {e}");
+                Randomizer.Log.LogMessage($"Exception during StartingEquipment.InitItems hook: {e}");
             }
         }
-    
+
         internal static IEnumerator DelayedAnimFix(Character character)
         {
             yield return new WaitForSeconds(0.5f);
