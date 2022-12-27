@@ -70,7 +70,7 @@ namespace MoreChatCommands
     class ChatPanel_DebugCommand_Patch
     {
         [HarmonyPrefix]
-        public static bool Prefix(ChatPanel __instance, bool __result)
+        public static bool Prefix(ChatPanel __instance, ref bool __result)
         {
             // INFO: return true to run original function; false => skip original
             // INFO: __result = true, is no command; false => cmd, no chat msg
@@ -81,7 +81,8 @@ namespace MoreChatCommands
                 if (!command.StartsWith("/")) // not a chat cmd
                 {
                     MoreChatCommands.DebugTrace("Not a command.");
-                    return true; // run because else we cant send the chat message //FIXME: why
+                    __result = true; // not a cmd
+                    return false; // no need to run anymore
                 }
 
                 // split cmd into arguments
