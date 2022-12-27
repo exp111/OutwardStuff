@@ -7,3 +7,5 @@ Ideas:
 - overwrite original commands or add better error handling to them => transpiler?
 - item info which takes item id list and shows them pretty, spawnable
 - /learn skill => f3 is filtered
+- fix invulnerability not working after rejoin
+- disable autosave completely (even on world exit)

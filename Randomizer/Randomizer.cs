@@ -325,7 +325,7 @@ namespace Randomizer
     }
 
     [HarmonyPatch(typeof(StartingEquipment), nameof(StartingEquipment.InitItems))]
-    static class StartingEquipmentInitPatch //FIXME: some enemies "skip" the starting Equipment and use the normal weapons when loaded from the environment save
+    static class StartingEquipmentInitItemsPatch
     {
         [HarmonyPrefix]
         internal static void Prefix(StartingEquipment __instance)
@@ -406,22 +406,12 @@ namespace Randomizer
                         Randomizer.DebugTrace($"Generated: {item.Name}, ({item.ItemID}) for {prefab.Name} ({prefab.ItemID})");
                         __instance.m_startingEquipment[(int)equipment.EquipSlot] = item;
                         RandomItemLibrary.FixCombatStates(__instance.m_character, item, equipment);
-
-                        // if we've got a editor item, it will spawn even though we have the startingequipment
-                        // so we've gotta delete/remove that, so it wont be added later into the inventory
-                        var realEquipSlot = __instance.m_character.Inventory.Equipment.EquipmentSlots[(int)equipment.EquipSlot];
-                        if (realEquipSlot.m_editorEquippedItem)
-                        {
-                            Randomizer.DebugTrace($"Deleting editor item: {realEquipSlot.m_editorEquippedItem}");
-                            ItemManager.Instance.DestroyItem(realEquipSlot.m_editorEquippedItem);
-                            realEquipSlot.m_editorEquippedItem = null;
-                        }
                     }
                 }
                 Randomizer.DebugLog("StartingEquipment.InitItems: end");
                 Randomizer.StopTimer();
 
-                Randomizer.Instance.StartCoroutine(DelayedAnimFix(__instance.m_character));
+                Randomizer.Instance.StartCoroutine(DelayedRegisterUIDFix(__instance));
             }
             catch (Exception e)
             {
@@ -429,13 +419,36 @@ namespace Randomizer
             }
         }
 
-        // This fixes the spinning problem
-        internal static IEnumerator DelayedAnimFix(Character character)
+        // Some items are only registered when active (ie the player near them), so we register them early so they'll get saved
+        internal static IEnumerator DelayedRegisterUIDFix(StartingEquipment startingEquipment)
         {
             yield return new WaitForSeconds(0.5f);
 
-            character.gameObject.SetActive(false);
-            character.gameObject.SetActive(true);
+            try
+            {
+                var equipment = startingEquipment.m_character.Inventory.Equipment;
+                foreach (var equip in startingEquipment.m_startingEquipment)
+                {
+                    if (equip != null)
+                    {
+                        var slot = equipment.EquipmentSlots[(int)equip.EquipSlot];
+                        if (slot == null)
+                            continue;
+
+                        var realEquipment = slot.EquippedItem;
+                        if (realEquipment && !realEquipment.m_initialized)
+                        {
+                            //ItemManager.Instance.RequestItemInitialization(realEquipment);
+                            realEquipment.Start();
+                            Randomizer.DebugTrace($"Registering {realEquipment} for character {startingEquipment.m_character}");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during DelayedRegisterUIDFix: {e}");
+            }
         }
     }
 
@@ -510,7 +523,7 @@ namespace Randomizer
                     Transpilers.EmitDelegate<Action<string[]>>((itemInfos) =>
                     {
                         if (Item.IsChildOfEquipmentSlot(itemInfos) && !Item.IsHandEquipment(itemInfos))
-                            Randomizer.Log.LogMessage($"allowing item to be loaded: {Item.GetItemUIDFromSyncInfo(itemInfos)} ({Item.GetItemIDFromSyncInfo(itemInfos)})");
+                            Randomizer.DebugTrace($"allowing item to be loaded: {Item.GetItemUIDFromSyncInfo(itemInfos)} ({Item.GetItemIDFromSyncInfo(itemInfos)})");
                     })
                 );
 #endif
@@ -528,6 +541,80 @@ namespace Randomizer
                 Randomizer.Log.LogMessage($"Exception during ItemManager.OnReceiveItemSync transpiler: {e}");
                 return instructions;
             }
+        }
+    }
+
+    // Delete the editor items as they honestly just do shit
+    [HarmonyPatch(typeof(StartingEquipment), nameof(StartingEquipment.Init))]
+    static class StartingEquipmentInitPatch
+    {
+        [HarmonyPrefix]
+        internal static void Prefix(StartingEquipment __instance)
+        {
+            var equipment = __instance.m_character.Inventory.Equipment;
+            foreach (var equip in __instance.m_startingEquipment)
+            {
+                if (equip != null)
+                {
+                    var slot = equipment.EquipmentSlots[(int)equip.EquipSlot];
+                    if (slot == null)
+                        continue;
+
+                    // if we've got a editor item, it will spawn even though we have the startingequipment
+                    // so we've gotta delete/remove that, so it wont be added later into the inventory
+                    if (slot.m_editorEquippedItem)
+                    {
+                        Randomizer.DebugTrace($"Deleting editor item: {slot.m_editorEquippedItem}");
+                        ItemManager.Instance.DestroyItem(slot.m_editorEquippedItem);
+                        slot.m_editorEquippedItem = null;
+                    }
+                }
+            }
+        }
+
+        internal static void Postfix(StartingEquipment __instance)
+        {
+            // Force saveable
+            try
+            {
+                var equipment = __instance.m_character.Inventory.Equipment;
+                foreach (var equip in __instance.m_startingEquipment)
+                {
+                    if (equip != null)
+                    {
+                        var slot = equipment.EquipmentSlots[(int)equip.EquipSlot];
+                        if (slot == null)
+                            continue;
+
+                        if (slot.EquippedItem == null)
+                            continue;
+
+                        if (slot.EquippedItem.SaveType != Item.SaveTypes.Savable)
+                        {
+                            Randomizer.DebugTrace($"forcing item: {slot.EquippedItem} to be saveable; ai: {slot.EquippedItem.IsAiStartingGear}, force: {slot.EquippedItem.ForceNonSavable}");
+                        }
+                        slot.EquippedItem.SaveType = Item.SaveTypes.Savable;
+                        //TODO: this works on the first run (where the startingequip is generated) but not after a load
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during StartingEquipment.Init hook: {e}");
+            }
+
+            // fix spin
+            Randomizer.Instance.StartCoroutine(DelayedAnimFix(__instance.m_character));
+            //TODO: this works on the first run (where the startingequip is generated) but not after a load
+        }
+
+        // This fixes the spinning problem
+        internal static IEnumerator DelayedAnimFix(Character character)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            character.gameObject.SetActive(false);
+            character.gameObject.SetActive(true);
         }
     }
 }

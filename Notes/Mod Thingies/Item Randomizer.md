@@ -3,13 +3,13 @@
 - fix enemies sometimes being saved/spawned with the default weapon/armor
 - randomizes ultimate backpack items (held by the backpack) => probably because of no localplayer check in `StartingEquipmentInitPatch`
 - fix enchanted weapons spawning their non enchanted part when picked up
-- ~~fix enemies spinning sometimes (call Character.FixAnimationBugCheat after equipping/setting new armor?)~~ => hasnt happened again?
 - didnt randomize without config manager/in first area??
 - randomize spawned items
 - config options to not randomize backpack?
 - quest rewards?
 - recheck manual blacklist
-- try saving our randomized armor/weapons by hooking the save/load func
+- fix spinning on save load
+- fix monster weapons not being saved
 
 ## Details
 Randomize:
@@ -909,3 +909,408 @@ in save:
 items not saved (because inactive/not equipped)? or not randomized?
 
 test: load world, randomize, save+rejoin, get bugged char uid, see if it was randomized in log
+```
+[Message:Randomizer] StartingEquipment.InitItems: instance: NewBanditEquip_StandardBasic1_E_5WHJJhJfUUiOHP2nxPqmug (StartingEquipment) for NewBanditEquip_StandardBasic1_E_5WHJJhJfUUiOHP2nxPqmug (Character)
+
+[Message:Randomizer] StartingPouchItems: System.Collections.Generic.List`1[ItemQuantity] (0 Elements)
+
+[Message:Randomizer] startingEquipment: Equipment[]
+
+[Message:Randomizer] Helmet: 3000039_LooterHelm (Armor)
+
+[Message:Randomizer] Generated: Skeleton Helm with Hat, (3200034) for Looter Mask (3000039)
+
+[Message:Randomizer] Deleting editor item: 3000039_LooterMask_5WHJJhJfUU (Armor)
+
+[Message:Randomizer] Chest: 3000038_LooterArmor (Armor)
+
+[Message:Randomizer] Generated: Black Fur Armor, (3000330) for Looter Armor (3000038)
+
+[Message:Randomizer] Deleting editor item: 3000038_LooterArmor_5WHJJhJfUU (Armor)
+
+[Message:Randomizer] Foot: 3000034_ScavengerBoots (Armor)
+
+[Message:Randomizer] Generated: Padded Boots, (3000012) for Scavenger Boots (3000034)
+
+[Message:Randomizer] Deleting editor item: 3000034_ScavengerBoots_5WHJJhJfUU (Armor)
+
+[Message:Randomizer] RightHand: 2000060_Machete (MeleeWeapon)
+
+[Message:Randomizer] Generated: Iron Sword, (2000010) for Machete (2000060)
+
+[Message:Randomizer] Deleting editor item: 2000060_Machete_M2pHiX4QXE (MeleeWeapon)
+
+[Message:Randomizer] StartingEquipment.InitItems: end
+```
+=> (other bandit but same problem) randomized, but not saved
+```
+<CharacterSaveData>
+
+      <NewSave>false</NewSave>
+
+      <VisualData>
+
+        <Gender>Male</Gender>
+
+        <HairStyleIndex>0</HairStyleIndex>
+
+        <HairColorIndex>0</HairColorIndex>
+
+        <SkinIndex>0</SkinIndex>
+
+        <HeadVariationIndex>0</HeadVariationIndex>
+
+      </VisualData>
+
+      <UID>5WHJJhJfUUiOHP2nxPqmug</UID>
+
+      <Health>90</Health>
+
+      <ManaPoint>0</ManaPoint>
+
+      <Position>
+
+        <x>1021.506</x>
+
+        <y>-1000.00269</y>
+
+        <z>998.05</z>
+
+      </Position>
+
+      <Forward>
+
+        <x>0</x>
+
+        <y>0</y>
+
+        <z>1</z>
+
+      </Forward>
+
+      <Money>0</Money>
+
+      <EncounterTime>-1</EncounterTime>
+
+      <IsAiActive>false</IsAiActive>
+
+      <StatusList />
+
+    </CharacterSaveData>
+```
+=> no other item reference
+
+test: see if inactive bandit has randomized items equipped
+=> yes (checked both uids previously used) => so the items arent added to the save
+idea: look in the save func
+`EnvironmentSave.PrepareSave`
+```cs
+foreach (string key in worldItems.Keys)
+{
+	if (worldItems.TryGetValue(key, out item) && !item.IsChildToPlayer && !item.NonSavable && !item.IsPendingDestroy && !item.IsInPermanentZone && !item.IsBeingTaken && (item.OwnerCharacter == null || !item.OwnerCharacter.IsItemCharacter) && (!item.OwnerCharacter || !item.OwnerCharacter.NonSavable) && !(item is Quest))
+	{
+		this.ItemList.Add(new BasicSaveData(item));
+	}
+}
+```
+=> no uid, therefore not in worldItems?
+test: hook `ItemManager.ItemHasBeenAdded` or `Item.RegisterUID` to see who registers the startingequip => no clue, as its inited after item spawn
+=> setting inactive bandit active also creates a uid (and there for in the save)
+
+ideas to fix this:
+- include randomized items in the save
+- - force init after spawn, therefore generating a uid and being in worldItems
+- - rewrite PrepareSave to also include inactive items
+- let the enemies not be saved => do they get respawn by the game?
+- set the enemies to be saved as "empty" characters (`NewSave`)
+
+test: dont save characters
+```cs
+[HarmonyPatch(typeof(EnvironmentSave), nameof(EnvironmentSave.PrepareSave))]
+    static class EnvironmentSavePrepareSavePatch
+    {
+        [HarmonyPrefix]
+        internal static bool PrepareSave(EnvironmentSave __instance)
+        {
+            __instance.ItemList.Clear();
+            DictionaryExt<string, Item> worldItems = ItemManager.Instance.WorldItems;
+            Item item = null;
+            foreach (string key in worldItems.Keys)
+            {
+                if (worldItems.TryGetValue(key, out item) && !item.IsChildToPlayer && !item.NonSavable && !item.IsPendingDestroy && !item.IsInPermanentZone && !item.IsBeingTaken && (item.OwnerCharacter == null || !item.OwnerCharacter.IsItemCharacter) && (!item.OwnerCharacter || !item.OwnerCharacter.NonSavable) && !(item is Quest))
+                {
+                    __instance.ItemList.Add(new BasicSaveData(item));
+                }
+            }
+            __instance.CharList.Clear();
+            for (int i = 0; i < CharacterManager.Instance.Characters.Count; i++)
+            {
+                if (CharacterManager.Instance.Characters.Values[i].OwnerPlayerSys == null && !CharacterManager.Instance.Characters.Values[i].NonSavable)
+                {
+                    if (!CharacterManager.Instance.Characters.Values[i].isActiveAndEnabled)
+                        continue;
+
+                    CharacterManager.Instance.Characters.Values[i].CheckElevatorPosition();
+                    CharacterSaveData characterSaveData = new CharacterSaveData(CharacterManager.Instance.Characters.Values[i]);
+                    characterSaveData.NewSave = false;
+                    __instance.CharList.Add(characterSaveData);
+                }
+            }
+            __instance.InteractionActivatorList.Clear();
+            __instance.InteractionActivatorList.AddRange(SceneInteractionManager.Instance.GetInteractionActivatorsSaveData());
+            __instance.DropTablesList.Clear();
+            __instance.DropTablesList.AddRange(SceneInteractionManager.Instance.GetDropTablesSaveData());
+            __instance.CampingEventSaveData = CampingEventManager.Instance.GetCurrentEventTableSaveData();
+            __instance.DefeatScenarioSaveData = DefeatScenariosManager.Instance.GetCurrentEventTableSaveData();
+            __instance.UsedSoulSpots = EnvironmentConditions.Instance.GetUsedSoulSpotUIDs();
+            __instance.TOD = EnvironmentConditions.Instance.TimeOfDay;
+            __instance.GameTime = EnvironmentConditions.GameTime;
+            __instance.LastSpawnIDUsed = SpawnPointManager.Instance.LastSpawnPointUsed;
+            __instance.PermanentItemZoneList.Clear();
+            if (PermanentItemZone.ZoneCount > 0)
+            {
+                IList<PermanentItemZone> zones = PermanentItemZone.Zones;
+                for (int j = 0; j < zones.Count; j++)
+                {
+                    if (zones[j].ItemsInZone.Count > 0)
+                    {
+                        __instance.PermanentItemZoneList.Add(new PermanentItemZoneSave(zones[j]));
+                    }
+                }
+            }
+            return false; // skip
+        }
+    }
+```
+=> enemy reserves seem to be replaced, but idk if there are fewer enemies => saving them as new would probably be safer
+=> this also deletes enemies that were randomized but are non inactive
+=> need better way to detect that they were never init'ed => look into AISquadManager?
+```cs
+public void AISquadManager.TryActivateSquad(AISquad _squad, bool _resetPositions = true) {
+  if (_squad != null && this.m_squadsInReserve.Contains(_squad)) {
+    if (this.CheckActiveSquadsCap()) {
+      this.m_squadsInReserve.Remove(_squad);
+      this.m_squadsInPlay.Add(_squad);
+      _squad.SetSquadActive(true, _resetPositions);
+      if (!NetworkLevelLoader.Instance.IsOverallLoadingDone) {
+        this.SyncSquadInfo(_squad);
+        return;
+      }
+    } else {
+      this.m_lastSpawnCheckTime -= this.SpawnTime / 2 f;
+    }
+  }
+}
+
+public void AISquad.SetSquadActive(bool _active, bool _resetPositions = true) {
+  base.gameObject.SetActive(_active);
+  if (_resetPositions) {
+    for (int i = 0; i < this.m_squadMemberList.Count; i++) {
+      if (this.m_squadMemberList[i].CharAI && this.m_squadMemberList[i].CharAI.Character.Alive) {
+        this.m_squadMemberList[i].PositionForSpawn();
+      }
+    }
+  }
+  Global.RPCManager.photonView.RPC("SendSquadInfo", PhotonTargets.Others, new object[] {
+    this.ToNetworkData()
+  });
+}
+```
+=> this doesnt help me at all; deactivate also resets everything
+=> `CharacterAI.Encounter?` => doesnt mean they werent init'ed, but we can probably delete those? still loss
+
+try: activate all items created, so they will be saved
+```cs
+internal static IEnumerator DelayedRegisterUIDFix(StartingEquipment startingEquipment)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            try
+            {
+                var equipment = startingEquipment.m_character.Inventory.Equipment;
+                foreach (var equip in startingEquipment.m_startingEquipment)
+                {
+                    if (equip != null)
+                    {
+                        switch (equip.EquipSlot)
+                        {
+                            case EquipmentSlot.EquipmentSlotIDs.RightHand:
+                            case EquipmentSlot.EquipmentSlotIDs.LeftHand:
+                                if (!Randomizer.RandomizeEnemyWeapons.Value)
+                                    continue;
+                                break;
+                            // dont randomize quiver ammo or backpack, seems to cause issues.
+                            case EquipmentSlot.EquipmentSlotIDs.Quiver:
+                            case EquipmentSlot.EquipmentSlotIDs.Back:
+                                continue;
+                            default:
+                                if (!Randomizer.RandomizeEnemyArmor.Value)
+                                    continue;
+                                break;
+                        }
+
+                        var slot = equipment.EquipmentSlots[(int)equip.EquipSlot];
+                        if (slot == null)
+                            continue;
+                        var realEquipment = slot.EquippedItem;
+                        if (realEquipment && !realEquipment.m_initialized)
+                            realEquipment.Start();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during DelayedRegisterUIDFix: {e}");
+            }
+        }
+```
+=> causes multiple items with the same uid (cause they're called at the same time?); but i think they will be generated nonetheless
+
+do `newSave=ShouldSave()` with
+```cs
+bool ShouldSave()
+{
+return EncounterTime != -1f && EquipmentNotInitialized();
+}
+```
+? (transpiler overwrite)
+
+non humanoid items also arent saved (same problem?)
+test: are the multiple items with same uid causes on the same mob?
+=> no. but why is the uid the same? => probably cause they're called from diff threads at the same time
+
+test: is encountertime set when first "loaded" or when first meeting the player 
+=> encountertime is set when player is hurt
+
+test: hook Item.Start and see if this is called for the instantiated items
+=> it is called? then why arent the uids registered
+```
+[Message:Randomizer] Start item 2400400_CageArmorBoss(Clone) (MeleeWeapon) (0GDSw0WKfEeDbff50VYd8Q) to MantisShrimp_mgDxGpW1iEqreU5vNiEfoQ (Character)
+```
+=> the uid is already set??
+
+test: hook and log more to see where the start fails
+```cs
+[HarmonyPatch(typeof(Item), nameof(Item.Start))]
+    static class ItemManagerRequestInitPatch
+    {
+        [HarmonyPrefix]
+        internal static void Prefix(Item __instance)
+        {
+            Randomizer.DebugTrace($"Start item {__instance} ({__instance.UID}) to {__instance.OwnerCharacter}");
+            __instance.m_toLogString = __instance.m_name.Replace(" ", string.Empty);
+            if (__instance.ScenePersistent || __instance.m_forceAlive || __instance.m_requestSyncInfo || PhotonNetwork.offlineMode || !PhotonNetwork.inRoom || (PhotonNetwork.inRoom && PhotonNetwork.isMasterClient))
+            {
+                if (!__instance.m_initialized)
+                {
+                    if (!NetworkLevelLoader.Instance.IsOverallLoadingDone)
+                    {
+                        Randomizer.DebugTrace($"request item init");
+                        ItemManager.Instance.RequestItemInitialization(__instance);
+                        return;
+                    }
+                    Randomizer.DebugTrace($"startinit");
+                    __instance.StartInit();
+                    return;
+                }
+            }
+            else if (PhotonNetwork.inRoom && PhotonNetwork.isNonMasterClientInRoom)
+            {
+                if (string.IsNullOrEmpty(__instance.m_UID))
+                {
+                    Randomizer.DebugTrace($"destroy");
+                    UnityEngine.Object.Destroy(__instance.gameObject);
+                    return;
+                }
+                if (__instance.ScenePersistent || __instance.m_forceAlive)
+                {
+                    Randomizer.DebugTrace($"registeruid");
+                    __instance.RegisterUID();
+                }
+            }
+        }
+    }
+```
+=> start isnt called for non active?
+
+in `StartingEquipment.InitItems()`:
+```cs
+Item item = UnityEngine.Object.Instantiate<Item>(this.StartingPouchItems[i].Item);
+item.ChangeParent(this.m_character.Inventory.Pouch.transform);
+if (Application.isPlaying)
+{
+	ItemManager.Instance.RequestItemInitialization(item);
+}
+```
+=> call RequestItemInit also in `InitEquipment`?
+
+test: Item prefabs that have a uid
+```cs
+foreach (var item in ResourcesPrefabManager.ITEM_PREFABS.Values)
+{
+	if (!string.IsNullOrEmpty(item.UID))
+	{
+		Log(item);
+	}
+}
+```
+=>
+```
+[Message:UnityExplorer] 1000040_ChestOrnateA (TreasureChest)
+
+[Message:UnityExplorer] 1000070_ChestTrunk (TreasureChest)
+
+[Message:UnityExplorer] 1000120_ChestEliteA (TreasureChest)
+
+[Message:UnityExplorer] 1001000_JunkPileA (TreasureChest)
+
+[Message:UnityExplorer] 1000130_ChestTrunkCaldera (TreasureChest)
+
+[Message:UnityExplorer] 1000140_ChestLionmanCaldera (TreasureChest)
+
+[Message:UnityExplorer] 1300001_Gatherable_Jade (Gatherable)
+
+[Message:UnityExplorer] 1900001_StaticCookingStation (CraftingStation)
+
+[Message:UnityExplorer] 2400003_HoundTeeth (MeleeWeapon)
+
+[Message:UnityExplorer] 2400100_WendigoClaw (MeleeWeapon)
+
+[Message:UnityExplorer] 2400101_WendigoAccursedClaw (MeleeWeapon)
+
+[Message:UnityExplorer] 2400130_ShellHorrorClaw (MeleeWeapon)
+
+[Message:UnityExplorer] 2400131_ShellHorrorClawWeak (MeleeWeapon)
+
+[Message:UnityExplorer] 2400132_ShellHorrorClawBurning (MeleeWeapon)
+
+[Message:UnityExplorer] 2400142_GalvanicGolemBrokenRapier (MeleeWeapon)
+
+[Message:UnityExplorer] 2400202_ForgeGolemRustLichMinionBeak (MeleeWeapon)
+
+[Message:UnityExplorer] 2400300_PyplaTeethAndTail (MeleeWeapon)
+
+[Message:UnityExplorer] 2400310_BoozuHorn (MeleeWeapon)
+
+[Message:UnityExplorer] 2400311_BoozuProudBeastHorn (MeleeWeapon)
+
+[Message:UnityExplorer] 2400370_TitanGolemHammer (MeleeWeapon)
+
+[Message:UnityExplorer] 2400371_TitanGolemHalberd (MeleeWeapon)
+
+[Message:UnityExplorer] 2400372_TitanGolemSword (MeleeWeapon)
+
+[Message:UnityExplorer] 2400400_CageArmorBoss (MeleeWeapon)
+
+[Message:UnityExplorer] 2400410_TorcrabBeakAndClaw (MeleeWeapon)
+
+[Message:UnityExplorer] 2400411_TorcrabGiantBeakAndClaw (MeleeWeapon)
+
+[Message:UnityExplorer] 5000204_EnchantingGuildTable (EnchantmentTable)
+
+[Message:UnityExplorer] 5000205_EnchantingGuildPillar (SingleItemContainer)
+```
+=> we can delete the uids and then register all items
+
+Problem: we dont delete the editor item if startingequipment isnt called
+=> hook Awake => completely breaks visuals??

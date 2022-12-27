@@ -37,6 +37,16 @@ namespace Randomizer
             yield return null;
 
             GenerateCache();
+
+            // fix uids
+            foreach (var prefab in ResourcesPrefabManager.ITEM_PREFABS.Values)
+            {
+                if (!string.IsNullOrEmpty(prefab.UID))
+                {
+                    Randomizer.DebugTrace($"Removing uid of {prefab}");
+                    prefab.UID = UID.Empty;
+                }
+            }
         }
 
 #if DEBUG

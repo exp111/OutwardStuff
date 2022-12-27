@@ -27,7 +27,7 @@
 * synced old woman moan in berg (important)
 * ~~loading screen time logger~~ => natively implemented in NetworkLevelLoader.FinishLoadLevel via Debug.Log
 * druid transform into mob spell/class
-* unityexplorer addon with outward specific stuff like "inspect localplayer", "inspect inventory/backpack", "show items" (maybe with a script?)
+* unityexplorer addon with outward specific stuff like "inspect localplayer", "inspect inventory/backpack", "show items", inspect focused enemy (maybe with a script?)
 * Gothic weapons/world/quests
 * elemental bullets
 
