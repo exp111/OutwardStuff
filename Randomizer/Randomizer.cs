@@ -450,7 +450,18 @@ namespace Randomizer
                 Randomizer.Log.LogMessage($"Exception during DelayedRegisterUIDFix: {e}");
             }
         }
+
+        // This fixes the spinning
+        internal static IEnumerator DelayedAnimFix(Character character)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            //INFO: this works better than character.FixAnimationBugCheat()
+            character.gameObject.SetActive(false);
+            character.gameObject.SetActive(true);
+        }
     }
+
 
     [HarmonyPatch(typeof(ItemManager), nameof(ItemManager.OnReceiveItemSync))]
     static class ItemManagerReceiveItemPatch
@@ -571,21 +582,27 @@ namespace Randomizer
                 }
             }
         }
+    }
 
-        internal static void Postfix(StartingEquipment __instance)
+    // Fix spinning //TODO: find more efficient function:
+    // CharacterEquipment.EquipItem seems to fail at times (ie on load)
+    // StartingEquipment.Init isn't enough alone (doesnt work after load)
+    [HarmonyPatch(typeof(Item), nameof(Item.UpdateParentChange), new Type[] { typeof(bool) })]
+    static class ItemUpdateParentChangePatch
+    {
+        [HarmonyPostfix]
+        internal static void Postfix(Item __instance)
         {
-            // fix spin
-            Randomizer.Instance.StartCoroutine(DelayedAnimFix(__instance.m_character));
-            //TODO: this works on the first run (where the startingequip is generated) but not after a load
-        }
+            // no owner, owner is player, owner dead
+            if (!__instance.OwnerCharacter || !__instance.OwnerCharacter.IsAI || __instance.OwnerCharacter.IsDead)
+                return;
 
-        // This fixes the spinning problem
-        internal static IEnumerator DelayedAnimFix(Character character)
-        {
-            yield return new WaitForSeconds(0.5f);
+            // only armor causes the spinning
+            if (__instance is not Armor)
+                return;
 
-            character.gameObject.SetActive(false);
-            character.gameObject.SetActive(true);
+            Randomizer.DebugTrace($"UpdateParentChange item {__instance} on owner: {__instance.OwnerCharacter}. Running AnimFix");
+            Randomizer.Instance.StartCoroutine(StartingEquipmentInitItemsPatch.DelayedAnimFix(__instance.OwnerCharacter));
         }
     }
 

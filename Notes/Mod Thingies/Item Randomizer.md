@@ -1313,4 +1313,10 @@ foreach (var item in ResourcesPrefabManager.ITEM_PREFABS.Values)
 => we can delete the uids and then register all items
 
 Problem: we dont delete the editor item if startingequipment isnt called
-=> hook Awake => completely breaks visuals??
+=> hook Awake => completely breaks visuals?? => do before `StartingEquip.Init`, which is also called on loaded enemies
+
+### Problem: spinning enemies on load
+loaded items are apparently added later than `StartingItem.Init`, so we cant 
+test: `Equipment.DataSynced` => called too often, many times mid combat
+test: `Item.UpdateParentChange` => also called often, but works if limited to armor (not really called after lvl load)
+test: `CharacterEquipment.EquipItem` => called not enough? sometimes doesnt catch loaded items
