@@ -19,6 +19,11 @@ Known issues:
 If you have any other issue, please open an issue on GitHub (linked above)
 
 Changelog:  
+1.1.5:
+- Fix enemies spawning without custom armor and weapons
+- Fix monster weapons not being saved
+- Fix enemies spinning after being loaded from a save
+
 1.1.4:
 - Fix enemies having their original equipment in their inventory
 
