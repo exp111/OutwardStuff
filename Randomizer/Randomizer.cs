@@ -574,35 +574,6 @@ namespace Randomizer
 
         internal static void Postfix(StartingEquipment __instance)
         {
-            // Force saveable
-            try
-            {
-                var equipment = __instance.m_character.Inventory.Equipment;
-                foreach (var equip in __instance.m_startingEquipment)
-                {
-                    if (equip != null)
-                    {
-                        var slot = equipment.EquipmentSlots[(int)equip.EquipSlot];
-                        if (slot == null)
-                            continue;
-
-                        if (slot.EquippedItem == null)
-                            continue;
-
-                        if (slot.EquippedItem.SaveType != Item.SaveTypes.Savable)
-                        {
-                            Randomizer.DebugTrace($"forcing item: {slot.EquippedItem} to be saveable; ai: {slot.EquippedItem.IsAiStartingGear}, force: {slot.EquippedItem.ForceNonSavable}");
-                        }
-                        slot.EquippedItem.SaveType = Item.SaveTypes.Savable;
-                        //TODO: this works on the first run (where the startingequip is generated) but not after a load
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Randomizer.Log.LogMessage($"Exception during StartingEquipment.Init hook: {e}");
-            }
-
             // fix spin
             Randomizer.Instance.StartCoroutine(DelayedAnimFix(__instance.m_character));
             //TODO: this works on the first run (where the startingequip is generated) but not after a load
@@ -615,6 +586,87 @@ namespace Randomizer
 
             character.gameObject.SetActive(false);
             character.gameObject.SetActive(true);
+        }
+    }
+
+    [HarmonyPatch(typeof(Item), nameof(Item.OnAwake))]
+    static class ItemOnAwakePatch
+    {
+#if DEBUG
+        [HarmonyDebug]
+#endif
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            try
+            {
+                var cur = new CodeMatcher(instructions);
+                /*
+                // Always set Savetype of monster items to saveable
+                if (this.ItemID >= 2400000 && this.ItemID < 2500000)
+                {
+                    this.SaveType = Item.SaveTypes.Parent_NonSavable;
+                ...
+
+                    IL_0038: ldarg.0 // this
+                    IL_0039: ldc.i4.3 // Parent_NonSaveable
+                    IL_003A: stfld valuetype Item / SaveTypes Item::SaveType
+
+                =>
+
+                if (this.ItemID >= 2400000 && this.ItemID < 2500000)
+                {
+                    this.SaveType = Item.SaveTypes.Savable;
+                    DebugLog();
+                ...
+
+                    IL_0154: ldarg.2 // this
+                    IL_0155: ldc.i4.0 // ItemManager.ItemSyncType.SceneLoad
+                    IL_003A: stfld valuetype Item / SaveTypes Item::SaveType
+                    : call Log
+
+                        */
+
+                var Item_SaveTypeField = AccessTools.Field(typeof(Item), nameof(Item.SaveType));
+
+                // find the save type set // this.SaveType = Item.SaveTypes.Parent_NonSavable;
+                cur.MatchForward(false, // start at the beginning
+                    new CodeMatch(OpCodes.Ldarg_0),
+                    new CodeMatch(OpCodes.Ldc_I4_3),
+                    new CodeMatch(OpCodes.Stfld, Item_SaveTypeField)
+                    );
+                Randomizer.DebugTrace($"found match at: {cur.Pos}, op: {cur.Instruction}");
+
+                cur.Advance(1); // go to ldc_i4_3
+                cur.Instruction.opcode = OpCodes.Ldc_I4_0;
+
+#if DEBUG
+                // insert our debug log
+                cur.Advance(1); // go past the stfld
+                cur.Insert(
+                    new CodeInstruction(OpCodes.Ldarg_0), // put "this" on the stack
+                    Transpilers.EmitDelegate<Action<Item>>((item) =>
+                    {
+                        Randomizer.DebugTrace($"forcing item: {item} to be saveable");
+                    })
+                );
+#endif
+
+                //TODO: also remove the uid set?
+
+                // debug log
+                var e = cur.InstructionEnumeration();
+                /*foreach (var code in e)
+                {
+                    Randomizer.DebugTrace(code.ToString());
+                }*/
+                return e;
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during Item.OnAwake transpiler: {e}");
+                return instructions;
+            }
         }
     }
 }
