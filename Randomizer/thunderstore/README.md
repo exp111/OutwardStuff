@@ -18,7 +18,7 @@ Known issues:
 
 If you have any other issue, please open an issue on GitHub (linked above)
 
-Changelog: 
+Changelog:  
 1.1.4:
 - Fix enemies having their original equipment in their inventory
 

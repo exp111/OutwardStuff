@@ -51,7 +51,9 @@ namespace FailedRecipes
         [HarmonyPatch(typeof(CraftingMenu), nameof(CraftingMenu.CraftingDone))]
         class CraftingMenu_CraftingDone_Patch
         {
-            //[HarmonyDebug]
+#if DEBUG
+            [HarmonyDebug]
+#endif
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 try

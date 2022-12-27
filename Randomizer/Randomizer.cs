@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using UnityEngine;
 using Random = System.Random;
 
@@ -58,6 +59,7 @@ namespace Randomizer
                 SideLoader.SL.OnPacksLoaded += SL_OnPacksLoaded;
 
                 Log.LogMessage("Initialized!");
+                PrintDebugWarning();
             }
             catch (Exception e)
             {
@@ -126,6 +128,11 @@ namespace Randomizer
         public static void DebugTrace(string message)
         {
             Log.LogMessage(message);
+        }
+        [Conditional("DEBUG")]
+        public static void PrintDebugWarning()
+        {
+            Log.LogMessage("Using a DEBUG build.");
         }
 
         // Generates a random 8 letter string
@@ -242,7 +249,7 @@ namespace Randomizer
                 Randomizer.StartTimer();
                 Randomizer.DebugLog($"Merchant.Initialize: instance: {__instance}, UID: {__instance.HolderUID}");
                 Randomizer.RandomizeDropable(__instance.DropableInventory);
-                //TODO: dont do this on refreshinventory but instead again on initialize? or take from dropableprefab
+                //TODO: dont do this on refreshinventory but instead again on initialize? or take from dropableprefab => need it in refresh for true random?
                 Randomizer.DebugLog($"Merchant.Initialize: end");
                 Randomizer.StopTimer();
             }
@@ -422,12 +429,105 @@ namespace Randomizer
             }
         }
 
+        // This fixes the spinning problem
         internal static IEnumerator DelayedAnimFix(Character character)
         {
             yield return new WaitForSeconds(0.5f);
 
             character.gameObject.SetActive(false);
             character.gameObject.SetActive(true);
+        }
+    }
+
+    [HarmonyPatch(typeof(ItemManager), nameof(ItemManager.OnReceiveItemSync))]
+    static class ItemManagerReceiveItemPatch
+    {
+#if DEBUG
+        [HarmonyDebug]
+#endif
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            try
+            {
+                var cur = new CodeMatcher(instructions);
+                /*
+                // Replace flag2 set to true, add log in debug (conditional add)
+                if (_syncType == ItemManager.ItemSyncType.SceneLoad)
+                {
+                    flag2 = (!Item.IsChildOfEquipmentSlot(array3) || Item.IsHandEquipment(array3));
+                }
+                ...
+
+                    IL_0154: ldarg.2 // _syncType
+                    IL_0155: ldc.i4.3 // ItemManager.ItemSyncType.SceneLoad
+                    IL_0156: bne.un.s IL_016D // jump away
+                    IL_0158: ldloc.s V_6 // array3
+                    IL_015A: call      bool Item::IsChildOfEquipmentSlot(string[])
+                    IL_015F: brfalse.s IL_016A // if (!..) { do }
+                    IL_0161: ldloc.s V_6 // array 3
+                    IL_0163: call      bool Item::IsHandEquipment(string[])
+                    IL_0168: br.s IL_016B // leaves the result on stack and jumps to save
+                    IL_016A: ldc.i4.1 // load true
+                    IL_016B: stloc.s V_7 // save into flag2
+                    IL_016D: ldloc.s   V_7
+
+                    =>
+
+                    if (_syncType == ItemManager.ItemSyncType.SceneLoad)
+                    {
+                        flag2 = true;
+                        if (Item.IsChildOfEquipmentSlot(array3) && !Item.IsHandEquipment(array3))
+                            Randomizer.DebugTrace($"allowing item: {itemUIDFromSyncInfo} ({Item.GetItemIDFromSyncInfo(array3)})");
+                    }
+
+                    IL_0154: ldarg.2 // _syncType
+                    IL_0155: ldc.i4.3 // ItemManager.ItemSyncType.SceneLoad
+                    IL_0156: bne.un.s <endOfFirstIf> // jump away
+                    : call ShouldLogAllow (only added on debug)
+                    IL_016A: ldc.i4.1 // load true
+                    IL_016B: stloc.s V_7 // save into flag2
+                    IL_016D: ldloc.s   V_7 (<endOfFirstIf>)
+
+                    */
+
+                var Item_IsChildOfEquipmentSlot = AccessTools.Method(typeof(Item), nameof(Item.IsChildOfEquipmentSlot));
+
+                // find the if // if (_syncType == ItemManager.ItemSyncType.SceneLoad)
+                cur.MatchForward(false, // start at the beginning
+                    new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Call, Item_IsChildOfEquipmentSlot)
+                    );
+                Randomizer.DebugTrace($"found match at: {cur.Pos}, op: {cur.Instruction}");
+                var array3 = cur.Operand;
+
+                cur.RemoveInstructions(6); // includes the current one
+
+#if DEBUG
+                // insert our debug log
+                cur.Insert(
+                    new CodeInstruction(OpCodes.Ldloc_S, array3), // put "array3" on the stack
+                    Transpilers.EmitDelegate<Action<string[]>>((itemInfos) =>
+                    {
+                        if (Item.IsChildOfEquipmentSlot(itemInfos) && !Item.IsHandEquipment(itemInfos))
+                            Randomizer.Log.LogMessage($"allowing item to be loaded: {Item.GetItemUIDFromSyncInfo(itemInfos)} ({Item.GetItemIDFromSyncInfo(itemInfos)})");
+                    })
+                );
+#endif
+
+                // debug log
+                var e = cur.InstructionEnumeration();
+                /*foreach (var code in e)
+                {
+                    Randomizer.DebugTrace(code.ToString());
+                }*/
+                return e;
+            }
+            catch (Exception e)
+            {
+                Randomizer.Log.LogMessage($"Exception during ItemManager.OnReceiveItemSync transpiler: {e}");
+                return instructions;
+            }
         }
     }
 }
