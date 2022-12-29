@@ -22,6 +22,7 @@ namespace AnimationTest
 
         public static AnimationTest Instance;
         public object Animator = null;
+        private static Harmony harmony;
 
         public void Awake()
         {
@@ -54,8 +55,12 @@ namespace AnimationTest
             }
 
             // Apply Patches
-            var harmony = new Harmony(ID);
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
+        }
+
+        public void OnDestroy()
+        {
+            harmony?.UnpatchSelf();
         }
 
         public void Log(object data)

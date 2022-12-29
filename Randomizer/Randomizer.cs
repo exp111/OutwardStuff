@@ -24,6 +24,8 @@ namespace Randomizer
         public static Randomizer Instance { get; private set; }
         public static ManualLogSource Log;
 
+        private static Harmony harmony;
+
         public static Random random = new();
 
         public static ConfigEntry<string> RandomizerSeed;
@@ -53,8 +55,7 @@ namespace Randomizer
                 // Config
                 SetupConfig();
 
-                var harmony = new Harmony(ID);
-                harmony.PatchAll(Assembly.GetExecutingAssembly());
+                harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
 
                 SideLoader.SL.OnPacksLoaded += SL_OnPacksLoaded;
 
@@ -65,6 +66,11 @@ namespace Randomizer
             {
                 Logger.LogMessage($"Exception during Init: {e}");
             }
+        }
+
+        void OnDestroy()
+        {
+            harmony?.UnpatchSelf();
         }
 
         private void SL_OnPacksLoaded()

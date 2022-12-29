@@ -8,8 +8,7 @@
 - config options to not randomize backpack?
 - quest rewards?
 - recheck manual blacklist
-- fix spinning on save load
-- fix monster weapons not being saved
+- option to not randomize ammunition
 
 ## Details
 Randomize:

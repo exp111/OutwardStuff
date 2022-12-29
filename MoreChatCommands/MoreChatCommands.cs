@@ -20,6 +20,7 @@ namespace MoreChatCommands
 
         public static ManualLogSource Log;
         public static List<CustomDebugCmd> DebugCommands;
+        private static Harmony harmony;
 
         void Awake()
         {
@@ -31,13 +32,17 @@ namespace MoreChatCommands
                 LoadDebugCommands();
 
                 // Harmony is for patching methods. If you're not patching anything, you can comment-out or delete this line.
-                var harmony = new Harmony(ID);
-                harmony.PatchAll(Assembly.GetExecutingAssembly());
+                harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
             }
             catch (Exception e)
             {
                 Log.LogMessage($"Exception during MoreChatCommands.Awake: {e}");
             }
+        }
+
+        void OnDestroy()
+        {
+            harmony?.UnpatchSelf();
         }
 
         // Finds all debug commands and adds them into a list

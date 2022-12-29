@@ -14,7 +14,7 @@
 * more defeat scenarios
 * speed hack
 * Pay for skills with gold ingots
-* Quest + Dialog functionality in sideloader
+* Quest (reward) + Dialog functionality in sideloader
 * Item + Photon View ID Manager
 * First person view
 * harmattan quest start condition removal + time limit removal => [[Quest Time Limits]]
