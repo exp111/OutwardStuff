@@ -57,6 +57,9 @@ namespace Randomizer
 
                 harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
 
+                // if SLPacks are already loaded (happens when reloading with scriptengine, initialize now)
+                if (SideLoader.SL.PacksLoaded)
+                    SL_OnPacksLoaded();
                 SideLoader.SL.OnPacksLoaded += SL_OnPacksLoaded;
 
                 Log.LogMessage("Initialized!");
@@ -68,7 +71,8 @@ namespace Randomizer
             }
         }
 
-        void OnDestroy()
+        // Used for ScriptEngine
+        internal void OnDestroy()
         {
             harmony?.UnpatchSelf();
         }

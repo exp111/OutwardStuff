@@ -138,10 +138,10 @@ armor isn't saved in in `.envc` or `worldc` files, but rather gets loaded from t
 
 **filter**:
 * skip: 
-* - currency
-* - gold ingots
-* - quests?
-* - test items? filter by generic test icon?
+	* currency
+	* gold ingots
+	* quests?
+	* test items? filter by generic test icon?
 * try to check for key items?
 * keep in the same category (MeleeWeapon only gets swapped to another MeleeWeapon)
 

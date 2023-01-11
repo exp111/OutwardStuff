@@ -3,7 +3,7 @@ base: https://github.com/Grim-/Outward.Mount
 ### Technical
 Mounts as items (whistles) or skills (various pro cons)
 WoW Style summoning (use to summon and ride, when attacked force dismount, use again to unsummon)
-No mount inventory => maybe carry bonus (as the animal carries you)
+No mount inventory => maybe carry bonus (as the animal carries you) => ignore "overloaded" status (under specific weight, bonus depends on mount?)
 Mount summon needs like 2-3 seconds to prevent abuse
 
 ### Content

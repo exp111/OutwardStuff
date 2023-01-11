@@ -1,4 +1,4 @@
-https://github.com/BepInEx/BepInEx.Debug
+https://github.com/BepInEx/BepInEx.Debug (https://github.com/BepInEx/BepInEx.Debug/releases/latest)
 
 Dynamically reload plugins (.dll) by putting them into `BepInEx/scripts` (doesnt read subdirs)
 
