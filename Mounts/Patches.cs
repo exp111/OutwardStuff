@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -47,7 +48,7 @@ namespace Mounts
         }
     }
 
-    /*[HarmonyPatch(typeof(Skill), nameof(Skill.HasAllRequirements))]
+    [HarmonyPatch(typeof(Skill), nameof(Skill.HasAllRequirements))]
     public class SkillHasAllReqs
     {
         static bool Prefix(Skill __instance, bool _tryingToActivate, ref bool __result)
@@ -62,11 +63,17 @@ namespace Mounts
                     if (!Mounts.Skills.ContainsKey(__instance.ItemID))
                         return true; // dont skip
 
-                    //TODO: check cooldown
+                    //check cooldown + conditions
+                    if (__instance.InCooldown())
+                    {
+                        __result = false; // will be false
+                        return false; // skip
+                    }
 
                     Mounts.DebugTrace($"Skill {__instance} is ours, bypassing");
-                    __instance.Use(__instance.m_ownerCharacter);
-                    __result = false;
+                    //__instance.SkillUsed();
+                    __instance.QuickSlotUse();
+                    __result = true;
                     return false; // dont run original
                 }
             }
@@ -76,5 +83,5 @@ namespace Mounts
             }
             return true; // dont skip
         }
-    }*/
+    }
 }

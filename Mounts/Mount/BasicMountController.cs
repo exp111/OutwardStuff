@@ -181,6 +181,7 @@ namespace Mounts
             MountController.Animator.SetFloat("Move Z", MountController.BaseInput.z != 0 ? 1f : 0f, 5f, 5f);
         }
 
+        // Stolen from LocalCharacterControl.Update //TODO: remove?
         private void UpdateMenuInputs(BasicMountController MountController)
         {
             bool flag = false;

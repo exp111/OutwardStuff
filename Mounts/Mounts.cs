@@ -122,7 +122,6 @@ namespace Mounts
         {
             try
             {
-                Mounts.DebugLog($"{new StackTrace()}");
                 var SpeciesName = "Wolf_Base";
                 Mounts.DebugTrace($"Spawning Mount {SpeciesName} for {_affectedCharacter}");
                 var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
@@ -138,25 +137,11 @@ namespace Mounts
                 //TODO: or Mounts.MountManager.CharacterHasMount(_affectedCharacter)?
                 if (!characterMount.HasActiveMount) // spawn mount
                 {
-                    Mounts.DebugLog($"spawning mount {SpeciesName}");
-                    MountSpecies mountSpecies = Mounts.MountManager.GetSpeciesDefinitionByName(SpeciesName);
-
-                    //TODO: mount
-                    if (mountSpecies != null)
-                    {
-                        BasicMountController basicMountController = Mounts.MountManager.CreateMountFromSpecies(_affectedCharacter, mountSpecies, OutwardHelpers.GetPositionAroundCharacter(_affectedCharacter), _affectedCharacter.transform.rotation);
-
-                    }
-                    else
-                    {
-                        Mounts.Log.LogMessage($"Could not find Species with Species Name: {SpeciesName}, in the list of definitions.");
-                    }
+                    SpawnMount(characterMount, SpeciesName);
                 }
                 else // despawn mount
                 {
-                    Mounts.DebugLog($"destroying active mount {characterMount.ActiveMount}");
-                    Mounts.MountManager.DestroyActiveMount(_affectedCharacter);
-                    characterMount.SetActiveMount(null);
+                    DespawnMount(characterMount);
                 }
             }
             catch (Exception e)
@@ -165,6 +150,49 @@ namespace Mounts
             }
         }
 
+        public static void SpawnMount(CharacterMount characterMount, string speciesName)
+        {
+            try
+            {
+                Mounts.DebugLog($"spawning mount {speciesName}");
+                MountSpecies mountSpecies = Mounts.MountManager.GetSpeciesDefinitionByName(speciesName);
+                var character = characterMount.Character;
+
+                if (characterMount.HasActiveMount)
+                {
+                    Mounts.DebugLog($"Character {character} already has active mount {characterMount.ActiveMount}. Deleting");
+                    DespawnMount(characterMount);
+                }
+
+                if (mountSpecies != null)
+                {
+                    BasicMountController basicMountController = Mounts.MountManager.CreateMountFromSpecies(character, mountSpecies, OutwardHelpers.GetPositionAroundCharacter(character), character.transform.rotation);
+
+                }
+                else
+                {
+                    Mounts.Log.LogMessage($"Could not find Species with Species Name: {speciesName}, in the list of definitions.");
+                }
+            }
+            catch (Exception e)
+            {
+                Log.LogMessage($"Exception during Mounts.SpawnMount: {e}");
+            }
+        }
+
+        public static void DespawnMount(CharacterMount characterMount)
+        {
+            try
+            {
+                Mounts.DebugLog($"destroying active mount {characterMount.ActiveMount}");
+                Mounts.MountManager.DestroyActiveMount(characterMount.Character);
+                characterMount.SetActiveMount(null);
+            }
+            catch (Exception e)
+            {
+                Log.LogMessage($"Exception during Mounts.DespawnMount: {e}");
+            }
+        }
 
         [Conditional("DEBUG")]
         public static void DebugLog(string message)

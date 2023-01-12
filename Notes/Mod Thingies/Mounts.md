@@ -22,4 +22,8 @@ Ideas:
 - hook control to only let the unsummon skill be called
 - Disable control and run the functions we wanna run => incompatibility?
 
-Don't disable, set `InputBlocked`? => cant move, trying to cast skill results in `You cannot do this now` (Loc'ed `Notification_Action_Invalid`)=> caused by `Skill.HasAllRequirements`. override this specifically for our skill?
+Don't disable, set `InputBlocked`? => cant move, trying to cast skill results in `You cannot do this now` (Loc'ed `Notification_Action_Invalid`)=> caused by `Skill.HasAllRequirements`. override this specifically for our skill? => would also need to hook `ItemDisplay.TryUse`
+
+## Skill is getting called twice
+Problem: Toggle skill was called twice. This is because i called `character.SpellCastAnim`
+Temp solution: use an item to summon and skill to desummon

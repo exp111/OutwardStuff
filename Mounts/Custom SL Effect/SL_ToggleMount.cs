@@ -44,7 +44,7 @@ namespace Mounts.Custom_SL_Effect
             }
             catch (Exception e)
             {
-                Mounts.Log.LogMessage($"Exception during ToggleMount: {e}");
+                Mounts.Log.LogMessage($"Exception during ToggleMount.ActivateLocally: {e}");
             }
         }
     }
