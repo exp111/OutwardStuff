@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
+using SideLoader;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,4 +46,35 @@ namespace Mounts
             }
         }
     }
+
+    /*[HarmonyPatch(typeof(Skill), nameof(Skill.HasAllRequirements))]
+    public class SkillHasAllReqs
+    {
+        static bool Prefix(Skill __instance, bool _tryingToActivate, ref bool __result)
+        {
+            try
+            {
+                Mounts.DebugLog($"Skill.HasAllRequirements hook for {__instance}");
+                var characterMount = __instance.m_ownerCharacter.GetComponent<CharacterMount>();
+                if (characterMount != null && characterMount.HasActiveMount && characterMount.ActiveMount.IsMounted)
+                {
+                    Mounts.DebugTrace($"Checking if skill is ours");
+                    if (!Mounts.Skills.ContainsKey(__instance.ItemID))
+                        return true; // dont skip
+
+                    //TODO: check cooldown
+
+                    Mounts.DebugTrace($"Skill {__instance} is ours, bypassing");
+                    __instance.Use(__instance.m_ownerCharacter);
+                    __result = false;
+                    return false; // dont run original
+                }
+            }
+            catch (Exception e)
+            {
+                Mounts.Log.LogMessage($"Exception during Skill.HasAllRequirements hook: {e}");
+            }
+            return true; // dont skip
+        }
+    }*/
 }

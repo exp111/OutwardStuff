@@ -292,7 +292,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Custom SL Effect\SL_ToggleMount.cs" />
-    <Compile Include="Custom SL Effect\SL_SpawnMount.cs" />
     <Compile Include="DialogueCharacter.cs" />
     <Compile Include="Mounts.cs" />
     <Compile Include="Mount\BasicMountController.cs" />

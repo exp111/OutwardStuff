@@ -15,3 +15,11 @@ Quests:
 - Czierzo: Hurt pearlbird for doing favour (starting mount, worse than bought ones)
 - Egg (sold or through quest) that needs to be bred
 - Evolve mounts by crafting/npc
+
+## Dismounting with quickslot skills
+Problem: Mod disables `CharacterControl`, which calls `LocalCharacterControl.UpdateQuickSlots` to call the skill
+Ideas:
+- hook control to only let the unsummon skill be called
+- Disable control and run the functions we wanna run => incompatibility?
+
+Don't disable, set `InputBlocked`? => cant move, trying to cast skill results in `You cannot do this now` (Loc'ed `Notification_Action_Invalid`)=> caused by `Skill.HasAllRequirements`. override this specifically for our skill?

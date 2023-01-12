@@ -5,6 +5,7 @@ using HarmonyLib;
 using NodeCanvas.DialogueTrees;
 using SideLoader;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -35,6 +36,7 @@ namespace Mounts
         }
 
         public static SLPack SLPack;
+        public static Dictionary<int, SL_Skill> Skills = new();
 
         public static ConfigEntry<float> WorldDropChanceThreshold;
         public static ConfigEntry<float> WorldDropChanceMinimum;
@@ -116,42 +118,50 @@ namespace Mounts
         }
 
         //TODO: call this from the skills, its here to work with scriptengine
-        static void ToggleMount(Character _affectedCharacter)
+        public static void ToggleMount(Character _affectedCharacter)
         {
-            var SpeciesName = "Wolf_Base";
-            Mounts.DebugTrace($"Spawning Mount {SpeciesName} for {_affectedCharacter}");
-            var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
-
-            if (characterMount == null)
+            try
             {
-                Mounts.Log.LogMessage($"No CharacterMount found for {_affectedCharacter.Name}.");
-                //return;
-                //TODO: remove this?
-                characterMount = _affectedCharacter.gameObject.AddComponent<CharacterMount>();
-            }
+                Mounts.DebugLog($"{new StackTrace()}");
+                var SpeciesName = "Wolf_Base";
+                Mounts.DebugTrace($"Spawning Mount {SpeciesName} for {_affectedCharacter}");
+                var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
 
-            //TODO: or Mounts.MountManager.CharacterHasMount(_affectedCharacter)?
-            if (!characterMount.HasActiveMount) // spawn mount
-            {
-                Mounts.DebugLog($"spawning mount {SpeciesName}");
-                MountSpecies mountSpecies = Mounts.MountManager.GetSpeciesDefinitionByName(SpeciesName);
-
-                //TODO: mount
-                if (mountSpecies != null)
+                if (characterMount == null)
                 {
-                    BasicMountController basicMountController = Mounts.MountManager.CreateMountFromSpecies(_affectedCharacter, mountSpecies, OutwardHelpers.GetPositionAroundCharacter(_affectedCharacter), _affectedCharacter.transform.rotation);
-
+                    Mounts.Log.LogMessage($"No CharacterMount found for {_affectedCharacter.Name}.");
+                    //return;
+                    //TODO: remove this?
+                    characterMount = _affectedCharacter.gameObject.AddComponent<CharacterMount>();
                 }
-                else
+
+                //TODO: or Mounts.MountManager.CharacterHasMount(_affectedCharacter)?
+                if (!characterMount.HasActiveMount) // spawn mount
                 {
-                    Mounts.Log.LogMessage($"could not find species with Species Name : {SpeciesName}, in the list of defintions.");
+                    Mounts.DebugLog($"spawning mount {SpeciesName}");
+                    MountSpecies mountSpecies = Mounts.MountManager.GetSpeciesDefinitionByName(SpeciesName);
+
+                    //TODO: mount
+                    if (mountSpecies != null)
+                    {
+                        BasicMountController basicMountController = Mounts.MountManager.CreateMountFromSpecies(_affectedCharacter, mountSpecies, OutwardHelpers.GetPositionAroundCharacter(_affectedCharacter), _affectedCharacter.transform.rotation);
+
+                    }
+                    else
+                    {
+                        Mounts.Log.LogMessage($"Could not find Species with Species Name: {SpeciesName}, in the list of definitions.");
+                    }
+                }
+                else // despawn mount
+                {
+                    Mounts.DebugLog($"destroying active mount {characterMount.ActiveMount}");
+                    Mounts.MountManager.DestroyActiveMount(_affectedCharacter);
+                    characterMount.SetActiveMount(null);
                 }
             }
-            else // despawn mount
+            catch (Exception e)
             {
-                Mounts.DebugLog($"destroying active mount {characterMount.ActiveMount}");
-                Mounts.MountManager.DestroyActiveMount(_affectedCharacter);
-                characterMount.SetActiveMount(null);
+                Log.LogMessage($"Exception during Mounts.ToggleMount: {e}");
             }
         }
 
@@ -171,12 +181,22 @@ namespace Mounts
         private void SL_OnSLPacksLoaded()
         {
             SLPack = SL.GetSLPack(ID); // defined via SideLoader/manifest.txt
-            DebugTrace($"SLPack {SLPack.Name} AssetBundles:");
+            DebugTrace($"SLPack {SLPack.Name}:");
+            // Cache skills
+            var skills = SLPack.GetContentOfType<SL_Skill>();
+            DebugTrace("Skills:");
+            foreach (var skill in skills)
+            {
+                DebugTrace($"- {skill}");
+                Skills.Add(skill.Value.New_ItemID, skill.Value);
+            }
+            DebugTrace("AssetBundles:");
             foreach (var pack in SLPack.AssetBundles)
                 DebugTrace($"- {pack}");
             MountManager = new MountManager(Directory.GetParent(SLPack.FolderPath).FullName); // mountspecies are saved next to the sideloader folder, not inside  
         }
 
+        // Delete mounts when going into the menu
         private void SceneManager_SceneLoaded(Scene Scene, LoadSceneMode LoadMode)
         {
             if (Scene.name == "MainMenu_Empty")

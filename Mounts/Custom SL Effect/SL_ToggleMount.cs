@@ -39,39 +39,8 @@ namespace Mounts.Custom_SL_Effect
         {
             try
             {
-                Mounts.DebugTrace($"Spawning Mount {SpeciesName} for {_affectedCharacter}");
-                var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
-
-                if (characterMount == null)
-                {
-                    Mounts.Log.LogMessage($"No CharacterMount found for {_affectedCharacter.Name}.");
-                    return;
-                }
-
-                Mounts.Log.LogMessage("mount");
-                Mounts.DebugLog("mount");
-                //TODO: or Mounts.MountManager.CharacterHasMount(_affectedCharacter)?
-                if (characterMount.HasActiveMount) // despawn mount
-                {
-                    Mounts.DebugLog($"Destroying Active Mount {characterMount.ActiveMount}");
-                    Mounts.MountManager.DestroyActiveMount(_affectedCharacter);
-                    characterMount.SetActiveMount(null);
-                }
-                else // spawn mount
-                {
-                    Mounts.DebugLog($"Spawning mount {SpeciesName}");
-                    MountSpecies mountSpecies = Mounts.MountManager.GetSpeciesDefinitionByName(SpeciesName);
-
-                    //TODO: mount
-                    if (mountSpecies != null)
-                    {
-                        BasicMountController basicMountController = Mounts.MountManager.CreateMountFromSpecies(_affectedCharacter, mountSpecies, OutwardHelpers.GetPositionAroundCharacter(_affectedCharacter), _affectedCharacter.transform.rotation);
-                    }
-                    else
-                    {
-                        Mounts.Log.LogMessage($"Could not find Species with SpeciesName: {SpeciesName}, in the list of definitions.");
-                    }
-                }
+                Mounts.Log.LogMessage($"Toggling mount {SpeciesName}");
+                Mounts.ToggleMount(_affectedCharacter);
             }
             catch (Exception e)
             {

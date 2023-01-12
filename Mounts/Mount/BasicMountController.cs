@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.TextCore;
 using Random = UnityEngine.Random;
 
 namespace Mounts
@@ -305,6 +306,29 @@ namespace Mounts
             //UpdateCurrentWeight(_affectedCharacter.Inventory.TotalWeight);
         }
 
+        /// <summary>
+        /// Prepares a Character for mounting to the MountGameObject
+        /// </summary>
+        /// <param name="character"></param>
+        private void PrepareCharacter(Character character)
+        {
+            character.CharMoveBlockCollider.enabled = false;
+            character.CharacterController.enabled = false;
+            //character.CharacterControl.enabled = false;
+            character.CharacterControl.InputLocked = true;
+
+            //cancel movement in animator
+            character.SetAnimMove(0, 0);
+            
+            TryToParent(character, gameObject);
+            OriginalPlayerCameraOffset = character.CharacterCamera.Offset;
+            SetCharacterCameraOffset(character, OriginalPlayerCameraOffset + MountedCameraOffset);
+
+            // Sit
+            character.SpellCastAnim(Character.SpellCastType.Sit, Character.SpellCastModifier.Immobilized, 1);
+            // character.CastSpell(Character.SpellCastType.Sit, character.gameObject, Character.SpellCastModifier.Immobilized, 1, -1f);
+        }
+
         public void DismountCharacter(Character _affectedCharacter)
         {
             IsMounted = false;
@@ -312,14 +336,16 @@ namespace Mounts
             _affectedCharacter.enabled = true;
             _affectedCharacter.CharMoveBlockCollider.enabled = true;
             _affectedCharacter.CharacterController.enabled = true;
-            _affectedCharacter.CharacterControl.enabled = true;
+            //_affectedCharacter.CharacterControl.enabled = true;
+            _affectedCharacter.CharacterControl.InputLocked = false;
+
             _affectedCharacter.Animator.enabled = true;
             _affectedCharacter.Animator.Update(Time.deltaTime);
 
             _affectedCharacter.transform.parent = null;
             _affectedCharacter.transform.position = transform.position;
             _affectedCharacter.transform.rotation = transform.rotation;
-
+            //TODO: unsit
             SetCharacterCameraOffset(_affectedCharacter, OriginalPlayerCameraOffset);
         }
         public void DisplayNotification(string text)
@@ -370,20 +396,6 @@ namespace Mounts
             Mounts.DebugLog($"Teleporting to {Position}, {Rotation}");
             transform.SetPositionAndRotation(Position, Rotation);
             Mounts.DebugLog($"Teleported to {Position}, {Rotation}");
-            //StartCoroutine(DelayTeleport(Position, Rotation));
-            //transform.position = Position;
-            //transform.rotation = Quaternion.Euler(Rotation);
-        }
-
-        private IEnumerator DelayTeleport(Vector3 Position, Vector3 Rotation)
-        {
-            Mounts.Log.LogMessage($"Teleporting {this} to {Position} {Rotation}");
-            yield return null;
-            yield return null;
-
-            transform.position = Position;
-            transform.rotation = Quaternion.Euler(Rotation);
-            yield break;
         }
 
         #endregion
@@ -407,24 +419,6 @@ namespace Mounts
 
             }
         }
-
-        /// <summary>
-        /// Prepares a Character for mounting to the MountGameObject
-        /// </summary>
-        /// <param name="character"></param>
-        private void PrepareCharacter(Character character)
-        {
-            character.CharMoveBlockCollider.enabled = false;
-            character.CharacterController.enabled = false;
-            character.CharacterControl.enabled = false;
-            //cancel movement in animator
-            character.SetAnimMove(0, 0);
-            character.SpellCastAnim(Character.SpellCastType.Sit, Character.SpellCastModifier.Immobilized, 1);
-            TryToParent(character, gameObject);
-            OriginalPlayerCameraOffset = character.CharacterCamera.Offset;
-            SetCharacterCameraOffset(character, OriginalPlayerCameraOffset + MountedCameraOffset);
-        }
-
     }
 
     public enum MountAnimations

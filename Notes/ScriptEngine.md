@@ -46,3 +46,7 @@ rd scripts
 mklink /D scripts "E:\D\Visual Studio\Projects\OutwardMods\MoreChatCommands\thunderstore\plugins"
 ```
 then make a shortcut and always run as admin
+
+## Problems
+- Doesn't work with SideLoader
+- Sometimes functions aren't called. Try calling them from UnityExplorer, caused a TypeLoadException one time which was because the Unity lib wasn't on 2020.3.26 => idk if this is a scriptengine specific problem

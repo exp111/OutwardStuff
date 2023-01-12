@@ -190,7 +190,7 @@ namespace Mounts
                 basicMountController.DismountCharacter(character);
             }
             // Check if we have any characters as children
-            if (basicMountController.gameObject.GetComponentInChildren<Character>() != null)
+            if (basicMountController.gameObject.transform.GetComponentInChildren<Character>() != null)
             {
                 Mounts.Log.LogMessage($"Warning: We are destroying a mount that contains a character ({character})!");
             }
