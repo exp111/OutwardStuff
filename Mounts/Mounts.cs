@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 namespace Mounts
 {
     [BepInPlugin(ID, NAME, VERSION)]
-    public class Mounts : BaseUnityPlugin
+    public partial class Mounts : BaseUnityPlugin
     {
         public const string ID = "com.exp111.Mounts";
         public const string NAME = "ExpMounts";
@@ -365,35 +365,37 @@ namespace Mounts
 
             // Add our root statement
             var InitialStatement = graph.AddNode<StatementNodeExt>();
-            InitialStatement.statement = new($"Welcome, can I store a mount for you perphaps in our stables?");
+            InitialStatement.statement = new($"Welcome, can I talk to you about mounts?");
             InitialStatement.SetActorName(ourActor.name);
 
             // Add a multiple choice
             var multiChoice1 = graph.AddNode<MultipleChoiceNodeExt>();
 
-            MultipleChoiceNodeExt.Choice DismissChoice = new MultipleChoiceNodeExt.Choice()
+            MultipleChoiceNodeExt.Choice LearnSkillsChoice = new()
             {
-                statement = new Statement("Can you look after my current mount?")
+                statement = new Statement("Can you teach me how to handle mounts?")
             };
 
-            MultipleChoiceNodeExt.Choice LearnSkillsChoice = new MultipleChoiceNodeExt.Choice()
+            MultipleChoiceNodeExt.Choice ExitChoice = new()
             {
-                statement = new Statement("Can you teach me some mount skills?")
+                statement = new Statement("No, thanks.")
             };
 
-            multiChoice1.availableChoices.Add(DismissChoice);
+
             multiChoice1.availableChoices.Add(LearnSkillsChoice);
+            multiChoice1.availableChoices.Add(ExitChoice);
 
             // Add our answers
-            var answer1 = graph.AddNode<StatementNodeExt>();
-            answer1.statement = new("Aye, that I can do.");
-            answer1.SetActorName(ourActor.name);
+            var exitAnswer = graph.AddNode<StatementNodeExt>();
+            exitAnswer.statement = new("Take care of your mounts.");
+            exitAnswer.SetActorName(ourActor.name);
 
-            var answer3 = graph.AddNode<StatementNodeExt>();
-            answer3.statement = new("Heres watcha do...");
-            answer3.SetActorName(ourActor.name);
+            var learnAnswer = graph.AddNode<StatementNodeExt>();
+            learnAnswer.statement = new("So here's how you do it...");
+            learnAnswer.SetActorName(ourActor.name);
 
-            //LearnMountSkillsNode learnMountSkillsNode = new LearnMountSkillsNode();
+            LearnMountSkillsNode learnMountSkillsNode = new();
+
 
             // ===== finalize nodes =====
             graph.allNodes.Clear();
@@ -403,22 +405,20 @@ namespace Mounts
             graph.allNodes.Add(InitialStatement);
             graph.primeNode = InitialStatement;
             graph.allNodes.Add(multiChoice1);
-            graph.allNodes.Add(answer1);
-            //graph.allNodes.Add(answer3);
-            //graph.allNodes.Add(learnMountSkillsNode);
+            graph.allNodes.Add(exitAnswer);
+            graph.allNodes.Add(learnAnswer);
+            graph.allNodes.Add(learnMountSkillsNode);
 
 
 
             // setup our connections
             graph.ConnectNodes(InitialStatement, multiChoice1);    // Connect Initial node to MultiChoice node
 
+            graph.ConnectNodes(multiChoice1, learnAnswer, 0);
+            graph.ConnectNodes(learnAnswer, learnMountSkillsNode);
+            graph.ConnectNodes(learnAnswer, InitialStatement);
 
-            graph.ConnectNodes(multiChoice1, answer1, 0);        //connect MultiChoice port 0 to answer 1
-            graph.ConnectNodes(answer1, InitialStatement);         // go back to start
-
-            //graph.ConnectNodes(multiChoice1, answer3, 2);
-            //graph.ConnectNodes(answer3, learnMountSkillsNode);
-            //graph.ConnectNodes(answer3, InitialStatement);
+            graph.ConnectNodes(multiChoice1, exitAnswer, 1); // unconnected node finishes dialogue
         }
     }
 }

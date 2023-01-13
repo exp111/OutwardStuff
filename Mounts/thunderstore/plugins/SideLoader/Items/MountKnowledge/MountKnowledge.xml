@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SL_Skill xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Target_ItemID>8205040</Target_ItemID>
+  <New_ItemID>-26200</New_ItemID>
+  <Name>Mount Knowledge</Name>
+  <Description>Know how to ride mounts.</Description>
+  <EffectBehaviour>Destroy</EffectBehaviour>
+  <EffectTransforms/>
+</SL_Skill>

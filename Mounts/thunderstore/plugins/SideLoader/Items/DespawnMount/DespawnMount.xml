@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
 <SL_Skill xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Target_ItemID>8100120</Target_ItemID>
-  <New_ItemID>-26200</New_ItemID>
+  <New_ItemID>-26201</New_ItemID>
   <Name>Despawn Mount</Name>
   <Description>Despawns mounts.</Description>
   <CastType>Sit</CastType>
   <CastModifier>Immobilized</CastModifier>
+  <EffectBehaviour>Destroy</EffectBehaviour>
   <EffectTransforms>
     <SL_EffectTransform>
       <TransformName>ActivationUnmounted</TransformName>

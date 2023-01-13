@@ -47,6 +47,10 @@
         <SL_EffectCondition xsi:type="SL_IsMounted">
           <Invert>true</Invert>
         </SL_EffectCondition>
+        <SL_EffectCondition xsi:type="SL_PassiveSkillCondition">
+          <Invert>false</Invert>
+          <ReqSkillID>-26200</ReqSkillID>
+        </SL_EffectCondition>
       </EffectConditions>
       <ChildEffects />
     </SL_EffectTransform>
