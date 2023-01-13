@@ -37,7 +37,7 @@
       <Scale xsi:nil="true" />
       <Effects>
         <SL_Effect xsi:type="SL_SpawnMount">
-          <Delay>0</Delay>
+          <Delay>0.7</Delay>
           <SyncType>OwnerSync</SyncType>
           <OverrideCategory>None</OverrideCategory>
           <SpeciesName>Wolf_Base</SpeciesName>
