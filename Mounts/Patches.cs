@@ -48,10 +48,10 @@ namespace Mounts
         }
     }
 
-    [HarmonyPatch(typeof(Skill), nameof(Skill.HasAllRequirements))]
-    public class SkillHasAllReqs
+    [HarmonyPatch(typeof(Skill), nameof(Skill.QuickSlotUse))]
+    public class Skill_QuickSlotUse
     {
-        static bool Prefix(Skill __instance, bool _tryingToActivate, ref bool __result)
+        static bool Prefix(Skill __instance)
         {
             try
             {
@@ -63,17 +63,20 @@ namespace Mounts
                     if (!Mounts.Skills.ContainsKey(__instance.ItemID))
                         return true; // dont skip
 
-                    //check cooldown + conditions
+                    //check cooldown // no need to check conditions as we only have the unsummon skill and that checks if we're mounted
                     if (__instance.InCooldown())
                     {
-                        __result = false; // will be false
                         return false; // skip
                     }
 
-                    Mounts.DebugTrace($"Skill {__instance} is ours, bypassing");
-                    //__instance.SkillUsed();
-                    __instance.QuickSlotUse();
-                    __result = true;
+                    Mounts.DebugTrace($"Skill {__instance} is ours, forcing");
+                    // INFO: we're forcing the skill because it wont work otherwise. idk why
+                    // TODO: find out why
+                    __instance.m_ownerCharacter.SetLastUsedSkill(__instance);
+                    __instance.m_ownerCharacter.ForceCastSpell(__instance.ActivateEffectAnimType,
+                        __instance.gameObject,
+                        __instance.CastModifier,
+                        __instance.GetCastSheathRequired(), __instance.MobileCastMovementMult);
                     return false; // dont run original
                 }
             }

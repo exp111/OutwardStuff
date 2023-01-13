@@ -325,9 +325,8 @@ namespace Mounts
             OriginalPlayerCameraOffset = character.CharacterCamera.Offset;
             SetCharacterCameraOffset(character, OriginalPlayerCameraOffset + MountedCameraOffset);
 
-            // Sit
+            // Sit //TODO: call sit while dismounting instead of relying on the skill to use that anim?
             character.SpellCastAnim(Character.SpellCastType.Sit, Character.SpellCastModifier.Immobilized, 1);
-            // character.CastSpell(Character.SpellCastType.Sit, character.gameObject, Character.SpellCastModifier.Immobilized, 1, -1f);
         }
 
         public void DismountCharacter(Character _affectedCharacter)
