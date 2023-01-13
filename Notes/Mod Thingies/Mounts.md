@@ -5,7 +5,6 @@ base: https://github.com/Grim-/Outward.Mount
 - change npcs
 - add quests
 - add mounts
-- fix dismount not being able to be called from menu (`ItemDisplay.TryUse` => `IsCharacterInAction`)
 - fix up summon animation by delaying effect
 - remove debug stuff
 - change item/skill ids

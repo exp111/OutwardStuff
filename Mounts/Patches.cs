@@ -1,12 +1,5 @@
 ﻿using HarmonyLib;
-using SideLoader;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Mounts
@@ -49,43 +42,77 @@ namespace Mounts
     }
 
     //TODO: do the same for itemdisplays
-    [HarmonyPatch(typeof(Skill), nameof(Skill.QuickSlotUse))]
-    public class Skill_QuickSlotUse
+    
+    public class SkillOverridePatches
     {
-        static bool Prefix(Skill __instance)
+        static bool ForceCastSkill(Skill __instance)
         {
-            try
+            var characterMount = __instance.m_ownerCharacter.GetComponent<CharacterMount>();
+            if (characterMount != null && characterMount.HasActiveMount && characterMount.ActiveMount.IsMounted)
             {
-                Mounts.DebugLog($"Skill.HasAllRequirements hook for {__instance}");
-                var characterMount = __instance.m_ownerCharacter.GetComponent<CharacterMount>();
-                if (characterMount != null && characterMount.HasActiveMount && characterMount.ActiveMount.IsMounted)
+                Mounts.DebugTrace($"Checking if skill is ours");
+                if (!Mounts.Skills.ContainsKey(__instance.ItemID))
+                    return true; // dont skip
+
+                //check cooldown // no need to check conditions as we only have the unsummon skill and that checks if we're mounted
+                if (__instance.InCooldown())
                 {
-                    Mounts.DebugTrace($"Checking if skill is ours");
-                    if (!Mounts.Skills.ContainsKey(__instance.ItemID))
-                        return true; // dont skip
-
-                    //check cooldown // no need to check conditions as we only have the unsummon skill and that checks if we're mounted
-                    if (__instance.InCooldown())
+                    if (__instance.m_ownerCharacter && __instance.m_ownerCharacter.CharacterUI)
                     {
-                        return false; // skip
+                        __instance.m_ownerCharacter.CharacterUI.ShowInvalidActionNotification(__instance.gameObject, "Notification_Skill_Cooldown");
                     }
-
-                    Mounts.DebugTrace($"Skill {__instance} is ours, forcing");
-                    // INFO: we're forcing the skill because it wont work otherwise. idk why
-                    // TODO: find out why
-                    __instance.m_ownerCharacter.SetLastUsedSkill(__instance);
-                    __instance.m_ownerCharacter.ForceCastSpell(__instance.ActivateEffectAnimType,
-                        __instance.gameObject,
-                        __instance.CastModifier,
-                        __instance.GetCastSheathRequired(), __instance.MobileCastMovementMult);
-                    return false; // dont run original
+                    return false; // skip
                 }
+
+                Mounts.DebugTrace($"Skill {__instance} is ours, forcing");
+                // INFO: we're forcing the skill because it wont work otherwise. idk why
+                // TODO: find out why
+                __instance.m_ownerCharacter.SetLastUsedSkill(__instance);
+                __instance.m_ownerCharacter.ForceCastSpell(__instance.ActivateEffectAnimType,
+                    __instance.gameObject,
+                    __instance.CastModifier,
+                    __instance.GetCastSheathRequired(), __instance.MobileCastMovementMult);
+                return false; // dont run original
             }
-            catch (Exception e)
+            return true;
+        }
+
+        [HarmonyPatch(typeof(ItemDisplay), nameof(ItemDisplay.TryUse))]
+        class ItemDisplay_TryUse
+        {
+            static bool Prefix(ItemDisplay __instance)
             {
-                Mounts.Log.LogMessage($"Exception during Skill.HasAllRequirements hook: {e}");
+                try
+                {
+                    Mounts.DebugLog($"ItemDisplay.TryUse hook for {__instance}");
+                    if (__instance.RefItem is Skill)
+                        return ForceCastSkill((Skill)__instance.RefItem);
+                    
+                }
+                catch (Exception e)
+                {
+                    Mounts.Log.LogMessage($"Exception during ItemDisplay.TryUse hook: {e}");
+                }
+                return true; // dont skip
             }
-            return true; // dont skip
+        }
+
+        [HarmonyPatch(typeof(Skill), nameof(Skill.QuickSlotUse))]
+        class Skill_QuickSlotUse
+        {
+            static bool Prefix(Skill __instance)
+            {
+                try
+                {
+                    Mounts.DebugLog($"Skill.HasAllRequirements hook for {__instance}");
+                    return ForceCastSkill(__instance);
+                }
+                catch (Exception e)
+                {
+                    Mounts.Log.LogMessage($"Exception during Skill.HasAllRequirements hook: {e}");
+                }
+                return true; // dont skip
+            }
         }
     }
 }
