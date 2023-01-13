@@ -5,8 +5,10 @@ base: https://github.com/Grim-/Outward.Mount
 - change npcs
 - add quests
 - add mounts
+- remove unused old mounts
 - remove debug stuff
 - change item/skill ids
+- fix item still doing anim when they dont have knowledge
 
 ### Technical
 Mounts as items (whistles) or skills (various pro cons)

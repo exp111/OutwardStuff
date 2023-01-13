@@ -3,7 +3,7 @@
   <Target_ItemID>8205040</Target_ItemID>
   <New_ItemID>-26200</New_ItemID>
   <Name>Mount Knowledge</Name>
-  <Description>Know how to ride mounts.</Description>
+  <Description>Know how to handle mounts.</Description>
   <EffectBehaviour>Destroy</EffectBehaviour>
   <EffectTransforms/>
 </SL_Skill>

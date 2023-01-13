@@ -3,13 +3,17 @@ using System;
 
 namespace Mounts.Custom_SL_Effect
 {
-    public class SL_DespawnMount : SL_Effect, ICustomModel
+    public class SL_ShowNotificationLoc : SL_Effect, ICustomModel
     {
-        public Type SLTemplateModel => typeof(SL_DespawnMount);
-        public Type GameModel => typeof(DespawnMount);
+        public Type SLTemplateModel => typeof(SL_ShowNotificationLoc);
+        public Type GameModel => typeof(ShowNotificationLoc);
+
+        public string Message;
 
         public override void ApplyToComponent<T>(T component)
         {
+            var comp = component as ShowNotificationLoc;
+            comp.Message = Message;
         }
 
         public override void SerializeEffect<T>(T effect)
@@ -17,10 +21,12 @@ namespace Mounts.Custom_SL_Effect
         }
     }
 
-    public class DespawnMount : Effect, ICustomModel
+    public class ShowNotificationLoc : Effect, ICustomModel
     {
-        public Type SLTemplateModel => typeof(SL_DespawnMount);
-        public Type GameModel => typeof(DespawnMount);
+        public Type SLTemplateModel => typeof(SL_ShowNotificationLoc);
+        public Type GameModel => typeof(ShowNotificationLoc);
+
+        public string Message;
 
         public override void ActivateLocally(Character _affectedCharacter, object[] _infos)
         {
@@ -28,14 +34,10 @@ namespace Mounts.Custom_SL_Effect
             {
                 //Mounts.DebugLog($"{new StackTrace()}");
                 Mounts.Log.LogMessage($"Despawning mount for {_affectedCharacter}");
-                var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
-
-                if (characterMount == null)
+                if (_affectedCharacter && _affectedCharacter.CharacterUI)
                 {
-                    Mounts.Log.LogMessage($"No CharacterMount found for {_affectedCharacter.Name}.");
-                    return;
+                    _affectedCharacter.CharacterUI.ShowInfoNotificationLoc(Message);
                 }
-                Mounts.DespawnMount(characterMount);
             }
             catch (Exception e)
             {

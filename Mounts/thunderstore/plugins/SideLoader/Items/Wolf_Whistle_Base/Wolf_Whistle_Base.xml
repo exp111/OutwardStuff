@@ -36,6 +36,27 @@
       <Rotation xsi:nil="true" />
       <Scale xsi:nil="true" />
       <Effects>
+        <SL_Effect xsi:type="SL_ShowNotificationLoc">
+          <Delay>0</Delay>
+          <SyncType>OwnerSync</SyncType>
+          <OverrideCategory>None</OverrideCategory>
+          <Message>The mount won't listen to unskilled trainers.</Message>
+        </SL_Effect>
+      </Effects>
+      <EffectConditions>
+        <SL_EffectCondition xsi:type="SL_PassiveSkillCondition">
+          <Invert>true</Invert>
+          <ReqSkillID>-26200</ReqSkillID>
+        </SL_EffectCondition>
+      </EffectConditions>
+      <ChildEffects />
+    </SL_EffectTransform>
+    <SL_EffectTransform>
+      <TransformName>Normal</TransformName>
+      <Position xsi:nil="true" />
+      <Rotation xsi:nil="true" />
+      <Scale xsi:nil="true" />
+      <Effects>
         <SL_Effect xsi:type="SL_SpawnMount">
           <Delay>0.7</Delay>
           <SyncType>OwnerSync</SyncType>
