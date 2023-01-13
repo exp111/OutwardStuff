@@ -85,71 +85,6 @@ namespace Mounts
             //TODO: unload resources?
         }
 
-        public void Update()
-        {
-            try
-            {
-                if (CustomKeybindings.GetKeyDown(Mounts.MOUNT_SPAWN_KEY) || Input.GetKeyDown(KeyCode.Z))
-                {
-                    DebugTrace("toggling");
-                    if (SplitScreenManager.Instance.LocalPlayers.Count == 0)
-                    {
-                        DebugTrace("No players found.");
-                        return;
-                    }
-                    var localPlayer = SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter;
-                    if (localPlayer == null)
-                    {
-                        DebugTrace("Player has no character.");
-                        return;
-                    }
-                    ToggleMount(localPlayer);
-                    return;
-                }
-                if (CustomKeybindings.GetKeyDown(Mounts.MOUNT_DESPAWN_KEY))
-                {
-
-                }
-            }
-            catch (Exception e)
-            {
-                Log.LogMessage($"Exception during Mounts.Update: {e}");
-            }
-        }
-
-        //TODO: call this from the skills, its here to work with scriptengine
-        public static void ToggleMount(Character _affectedCharacter)
-        {
-            try
-            {
-                var SpeciesName = "Wolf_Base";
-                Mounts.DebugTrace($"Spawning Mount {SpeciesName} for {_affectedCharacter}");
-                var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
-
-                if (characterMount == null)
-                {
-                    Mounts.Log.LogMessage($"No CharacterMount found for {_affectedCharacter.Name}.");
-                    //return;
-                    //TODO: remove this?
-                    characterMount = _affectedCharacter.gameObject.AddComponent<CharacterMount>();
-                }
-
-                //TODO: or Mounts.MountManager.CharacterHasMount(_affectedCharacter)?
-                if (!characterMount.HasActiveMount) // spawn mount
-                {
-                    SpawnMount(characterMount, SpeciesName);
-                }
-                else // despawn mount
-                {
-                    DespawnMount(characterMount);
-                }
-            }
-            catch (Exception e)
-            {
-                Log.LogMessage($"Exception during Mounts.ToggleMount: {e}");
-            }
-        }
-
         public static void SpawnMount(CharacterMount characterMount, string speciesName)
         {
             try
@@ -171,7 +106,7 @@ namespace Mounts
                 }
                 else
                 {
-                    Mounts.Log.LogMessage($"Could not find Species with Species Name: {speciesName}, in the list of definitions.");
+                    Log.LogMessage($"Could not find Species with Species Name: {speciesName}, in the list of definitions.");
                 }
             }
             catch (Exception e)

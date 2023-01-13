@@ -295,7 +295,6 @@
     <Compile Include="Custom SL Effect\SL_DespawnMount.cs" />
     <Compile Include="Custom SL Effect\SL_SpawnMount.cs" />
     <Compile Include="Custom SL Effect\SL_IsMounted.cs" />
-    <Compile Include="Custom SL Effect\SL_ToggleMount.cs" />
     <Compile Include="DialogueCharacter.cs" />
     <Compile Include="Mounts.cs" />
     <Compile Include="Mount\BasicMountController.cs" />

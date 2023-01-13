@@ -32,8 +32,7 @@ namespace Mounts.Custom_SL_Effect
         {
             try
             {
-                //Mounts.DebugLog($"{new StackTrace()}");
-                Mounts.Log.LogMessage($"Despawning mount for {_affectedCharacter}");
+                Mounts.DebugLog($"Showing Notification {Message} for {_affectedCharacter}");
                 if (_affectedCharacter && _affectedCharacter.CharacterUI)
                 {
                     _affectedCharacter.CharacterUI.ShowInfoNotificationLoc(Message);

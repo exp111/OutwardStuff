@@ -35,7 +35,7 @@ namespace Mounts
 
             if (characterMount != null && characterMount.HasActiveMount)
             {
-                Mounts.Log.LogMessage($"Warping {characterMount.ActiveMount} with {characterMount.Character.Name}");
+                Mounts.DebugLog($"Warping {characterMount.ActiveMount} with {characterMount.Character.Name}");
                 characterMount.ActiveMount.Teleport(_pos, Quaternion.Euler(_rot));
             }
         }

@@ -31,7 +31,6 @@ namespace Mounts.Custom_SL_Effect
         {
             try
             {
-                //Mounts.DebugLog($"IsMounted IsValid {_affectedCharacter}");
                 var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
 
                 return characterMount != null && // needs mount comp

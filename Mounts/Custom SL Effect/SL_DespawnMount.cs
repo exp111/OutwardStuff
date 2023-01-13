@@ -26,13 +26,12 @@ namespace Mounts.Custom_SL_Effect
         {
             try
             {
-                //Mounts.DebugLog($"{new StackTrace()}");
-                Mounts.Log.LogMessage($"Despawning mount for {_affectedCharacter}");
+                Mounts.DebugLog($"Despawning mount for {_affectedCharacter}");
                 var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
 
                 if (characterMount == null)
                 {
-                    Mounts.Log.LogMessage($"No CharacterMount found for {_affectedCharacter.Name}.");
+                    Mounts.DebugLog($"No CharacterMount found for {_affectedCharacter.Name}.");
                     return;
                 }
                 Mounts.DespawnMount(characterMount);

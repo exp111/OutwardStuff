@@ -6,7 +6,6 @@ base: https://github.com/Grim-/Outward.Mount
 - add quests
 - add mounts
 - remove unused old mounts
-- remove debug stuff
 - change item/skill ids
 - fix item still doing anim when they dont have knowledge
 
@@ -93,3 +92,10 @@ at Mounts.Custom_SL_Effect.DespawnMount.ActivateLocally (Character _affectedChar
 => calls `Character.CastSpell`
 => works if we force the spell => cant use `NONE` cast type? => cause `StartEffectsCast` isnt called
 => force call during `Skill.QuickSlotUse` => still doesnt work? => `Character.SendPerformSpellCastTrivial` works => lmao just set it to `Sit` and we'll just reverse our sitting => cast modif `Immobilized` runs anim, ie `Attack` doesnt  
+
+## Item still playing animation
+Problem: Item plays animation even when effectcondition is false
+Ideas:
+- Set base animation to `NONE`, then play animation `SummonGhost` in effect with `SL_PlayAnimation` => doesn't play any animation
+- Add `SL_PlayAnimation` with Anim `NONE` on inverted effectcondition => plays `SummonGhost` instead
+- 

@@ -37,7 +37,7 @@ namespace Mounts.Custom_SL_Effect
                     Mounts.DebugLog($"No character {_affectedCharacter.Name}");
                     return;
                 }
-                Mounts.Log.LogMessage($"Spawning mount {SpeciesName} for {_affectedCharacter}");
+                Mounts.DebugLog($"Spawning mount {SpeciesName} for {_affectedCharacter}");
                 var characterMount = _affectedCharacter.gameObject.GetComponent<CharacterMount>();
 
                 if (characterMount == null)

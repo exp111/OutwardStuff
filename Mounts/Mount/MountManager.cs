@@ -27,14 +27,14 @@ namespace Mounts
             RootFolder = rootFolder;
             SpeciesFolder = Path.Combine(RootFolder, "MountSpecies");
             
-            Mounts.Log.LogMessage($"Initalising MountManager at: {RootFolder}");
+            Mounts.DebugLog($"Initalising MountManager at: {RootFolder}");
             MountControllers = new Dictionary<Character, BasicMountController>();
             LoadAllSpeciesDataFiles();
         }
 
         private void LoadAllSpeciesDataFiles()
         {
-            Mounts.Log.LogMessage($"MountManager Initalising Species Definitions..");
+            Mounts.Log.LogMessage($"MountManager initalising Species Definitions..");
             SpeciesData.Clear();
 
             if (!Directory.Exists(SpeciesFolder))
