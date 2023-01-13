@@ -14,7 +14,6 @@ namespace Mounts
 {
     public class BasicMountController : MonoBehaviour
     {
-        #region Properties
         public Character CharacterOwner
         {
             get; private set;
@@ -57,18 +56,10 @@ namespace Mounts
             get; set;
         }
 
-        #endregion
-
-        //Mount Movement Settings
+        // Mount Movement Settings
         public float MoveSpeed { get; private set; }
         public float ActualMoveSpeed => WeightAsNormalizedPercent > WeightEncumberenceLimit ? MoveSpeed * EncumberenceSpeedModifier : MoveSpeed;
         public float RotateSpeed { get; private set; }
-        public float LeashDistance = 6f;
-        //A Point is randomly chosen in LeashPointRadius around player to leash to.
-        public float LeashPointRadius = 2.3f;
-        public float TargetStopDistance = 1.4f;
-        public float MoveToRayCastDistance = 20f;
-        public LayerMask MoveToLayerMask => LayerMask.GetMask("LargeTerrainEnvironment", "WorldItems");
 
         //weight
         public float CurrentCarryWeight = 0;
@@ -78,21 +69,16 @@ namespace Mounts
         public float EncumberenceSpeedModifier = 0.5f;
         public float WeightAsNormalizedPercent => CurrentCarryWeight / MaxCarryWeight;
 
-
         public Vector3 MountedCameraOffset;
-
-
         private Vector3 OriginalPlayerCameraOffset;
 
         public bool IsMounted;
-        public bool IsMoving;
         public float MountTotalWeight => BagContainer != null && BagContainer.ParentContainer != null ? BagContainer.ParentContainer.TotalContentWeight : 0;
 
         //Input - tidy up doesnt need this many calls or new v3s
         public Vector3 BaseInput => new Vector3(ControlsInput.MoveHorizontal(CharacterOwner.OwnerPlayerSys.PlayerID), 0, ControlsInput.MoveVertical(CharacterOwner.OwnerPlayerSys.PlayerID));
         public Vector3 CameraRelativeInput => Camera.main.transform.TransformDirection(BaseInput);
         public Vector3 CameraRelativeInputNoY => new Vector3(CameraRelativeInput.x, 0, CameraRelativeInput.z);
-        public float DistanceToOwner => CharacterOwner != null ? Vector3.Distance(transform.position, CharacterOwner.transform.position) : 0f;
 
         public void Awake()
         {
@@ -101,7 +87,6 @@ namespace Mounts
 
             MountUID = Guid.NewGuid().ToString();
         }
-
 
         public void SetOwner(Character mountTarget)
         {
@@ -121,7 +106,6 @@ namespace Mounts
             _affectedCharacter.CharacterCamera.Offset = NewOffset;
         }
 
-        #region Bag & Weight
         private void UpdateCurrentWeight(float newWeight)
         {
             CurrentCarryWeight = newWeight;
@@ -135,25 +119,9 @@ namespace Mounts
         {
             return Mounts.EnableWeightLimit.Value ? this.MountTotalWeight + weightToCarry < MaxCarryWeight : true;
         }
-        #endregion
 
         public void Update()
         {
-            /*if (MountedCharacter == null)
-            {
-                Mounts.Log.LogMessage($"we somehow ended up in the MountedState without a Mounted Character dismounting character owner and popping state.");
-                MountController.DismountCharacter(MountController.CharacterOwner);
-                //if we somehow ended up in the MountedState without a Mounted Character
-                Parent.PopState();
-                return;
-            }*/
-
-            /*if (CustomKeybindings.GetKeyDown(Mounts.MOUNT_DISMOUNT_KEY))
-            {
-                MountController.DismountCharacter(MountedCharacter);
-                Parent.PopState();
-            }*/
-
             if (CharacterOwner == null || !IsMounted)
             {
                 return;
@@ -161,12 +129,10 @@ namespace Mounts
 
             try
             {
-
                 this.transform.forward = Vector3.RotateTowards(this.transform.forward, this.transform.forward + this.CameraRelativeInputNoY, this.RotateSpeed * Time.deltaTime, 6f);
                 this.Controller.SimpleMove(this.CameraRelativeInput.normalized * this.ActualMoveSpeed);
 
                 UpdateAnimator(this);
-                UpdateMenuInputs(this);
 
             }
             catch (Exception e)
@@ -180,115 +146,6 @@ namespace Mounts
             MountController.Animator.SetFloat("Move X", MountController.BaseInput.x, 5f, 5f);
             MountController.Animator.SetFloat("Move Z", MountController.BaseInput.z != 0 ? 1f : 0f, 5f, 5f);
         }
-
-        // Stolen from LocalCharacterControl.Update //TODO: remove?
-        private void UpdateMenuInputs(BasicMountController MountController)
-        {
-            bool flag = false;
-            int playerID = MountController.CharacterOwner.OwnerPlayerSys.PlayerID;
-            if (MountController.CharacterOwner != null && MountController.CharacterOwner.CharacterUI != null && !MenuManager.Instance.InFade)
-            {
-                if ((MountController.CharacterOwner.CharacterUI.IsMenuFocused || MountController.CharacterOwner.CharacterUI.IsDialogueInProgress) && ControlsInput.MenuCancel(playerID))
-                {
-                    MountController.CharacterOwner.CharacterUI.CancelMenu();
-                }
-                if (!MountController.CharacterOwner.CharacterUI.IgnoreMenuInputs)
-                {
-                    if (!MountController.CharacterOwner.CurrentlyChargingAttack && !MountController.CharacterOwner.CharacterUI.IsDialogueInProgress && !MountController.CharacterOwner.CharacterUI.IsMenuJustToggled && !MountController.CharacterOwner.CharacterUI.IsOptionPanelDisplayed)
-                    {
-                        if (ControlsInput.ToggleInventory(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.Inventory, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleEquipment(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.Equipment, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleQuestLog(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.QuestLog, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleSkillMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.Skills, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleCharacterStatusMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.CharacterStatus, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleEffectMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.PlayerEffects, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleQuickSlotMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.QuickSlotAssignation, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleCraftingMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.Crafting, true);
-                            flag = true;
-                        }
-                        if (ControlsInput.ToggleMap(playerID) && (!ControlsInput.IsLastActionGamepad(playerID) || !MountController.CharacterOwner.CharacterUI.IsMenuFocused || MountController.CharacterOwner.CharacterUI.IsMapDisplayed))
-                        {
-                            MenuManager.Instance.ToggleMap(MountController.CharacterOwner.CharacterUI);
-                        }
-                    }
-                    if (ControlsInput.ExitContainer(playerID))
-                    {
-                        MountController.CharacterOwner.CharacterUI.CloseContainer();
-                    }
-                    if (ControlsInput.TakeAll(playerID))
-                    {
-                        MountController.CharacterOwner.CharacterUI.TakeAllItemsInput();
-                    }
-                    if (MountController.CharacterOwner.CharacterUI.IsMenuFocused)
-                    {
-                        if (!MountController.CharacterOwner.CharacterUI.IsMenuJustToggled)
-                        {
-                            if (ControlsInput.InfoInput(playerID))
-                            {
-                                MountController.CharacterOwner.CharacterUI.InfoInputMenu();
-                            }
-                            if (ControlsInput.MenuShowDetails(playerID))
-                            {
-                                MountController.CharacterOwner.CharacterUI.OptionInputMenu();
-                            }
-                        }
-                        if (ControlsInput.GoToPreviousMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.GoToPreviousTab();
-                        }
-                        if (ControlsInput.GoToNextMenu(playerID))
-                        {
-                            MountController.CharacterOwner.CharacterUI.GoToNextTab();
-                        }
-                    }
-                }
-                if (ControlsInput.ToggleChatMenu(playerID) && !MountController.CharacterOwner.CurrentlyChargingAttack && !MountController.CharacterOwner.CharacterUI.IsMenuFocused && !MountController.CharacterOwner.CharacterUI.IsDialogueInProgress && !MountController.CharacterOwner.CharacterUI.ChatPanel.IsChatFocused && !MountController.CharacterOwner.CharacterUI.ChatPanel.JustUnfocused)
-                {
-                    MountController.CharacterOwner.CharacterUI.ShowAndFocusChat();
-                    flag = true;
-                }
-                if (ControlsInput.ToggleHelp(playerID) && !MenuManager.Instance.IsConnectionScreenDisplayed && !MountController.CharacterOwner.CharacterUI.IsMenuJustToggled && !MountController.CharacterOwner.CharacterUI.IsInputFieldJustUnfocused && !MountController.CharacterOwner.Deploying && ((!MountController.CharacterOwner.CharacterUI.IsMenuFocused && !MountController.CharacterOwner.CharacterUI.IsDialogueInProgress) || MountController.CharacterOwner.CharacterUI.GetIsMenuDisplayed(CharacterUI.MenuScreens.PauseMenu)))
-                {
-                    MountController.CharacterOwner.CharacterUI.ToggleMenu(CharacterUI.MenuScreens.PauseMenu, true);
-                }
-            }
-            if (flag && MountController.CharacterOwner.Deploying)
-            {
-                MountController.CharacterOwner.DeployInput(-1);
-            }
-        }
-
-        #region Public Methods
 
         public bool CanMount(Character character)
         {
@@ -397,8 +254,6 @@ namespace Mounts
             transform.SetPositionAndRotation(Position, Rotation);
             Mounts.DebugLog($"Teleported to {Position}, {Rotation}");
         }
-
-        #endregion
 
         private void TryToParent(Character _affectedCharacter, GameObject MountInstance)
         {

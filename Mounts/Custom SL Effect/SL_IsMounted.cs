@@ -29,7 +29,7 @@ namespace Mounts.Custom_SL_Effect
 
         public override string ProcessMessage(string _message)
         {
-            return "Not mounted";
+            return "You are not mounted.";
         }
 
         public override bool CheckIsValid(Character _affectedCharacter)

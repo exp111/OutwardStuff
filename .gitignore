@@ -363,5 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 
 **/thunderstore/plugins/*
+!**/thunderstore/plugins/*/
 **/thunderstore/*.zip
 .obsidian/

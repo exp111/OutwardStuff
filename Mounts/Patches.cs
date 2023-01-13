@@ -48,6 +48,7 @@ namespace Mounts
         }
     }
 
+    //TODO: do the same for itemdisplays
     [HarmonyPatch(typeof(Skill), nameof(Skill.QuickSlotUse))]
     public class Skill_QuickSlotUse
     {

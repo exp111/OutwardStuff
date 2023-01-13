@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<SL_Skill xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Target_ItemID>8100120</Target_ItemID>
+  <New_ItemID>-26200</New_ItemID>
+  <Name>Despawn Mount</Name>
+  <Description>Despawns mounts.</Description>
+  <CastType>Sit</CastType>
+  <CastModifier>Immobilized</CastModifier>
+  <EffectTransforms>
+    <SL_EffectTransform>
+      <TransformName>ActivationUnmounted</TransformName>
+      <Position xsi:nil="true" />
+      <Rotation xsi:nil="true" />
+      <Scale xsi:nil="true" />
+      <Effects>
+        <SL_Effect xsi:type="SL_DespawnMount">
+          <Delay>0</Delay>
+          <SyncType>OwnerSync</SyncType>
+          <OverrideCategory>None</OverrideCategory>
+        </SL_Effect>
+      </Effects>
+      <EffectConditions>
+        <SL_EffectCondition xsi:type="SL_IsMounted">
+          <Invert>false</Invert>
+        </SL_EffectCondition>
+      </EffectConditions>
+    </SL_EffectTransform>
+  </EffectTransforms>
+  <Cooldown>0</Cooldown>
+  <StaminaCost>0</StaminaCost>
+</SL_Skill>
