@@ -15,17 +15,7 @@ namespace Mounts
         }
     }
 
-    // Dismount mount before dying
-    /*[HarmonyPatch(typeof(DefeatScenariosManager), nameof(DefeatScenariosManager.ActivateDefeatScenario))]
-    public class DefeatScenarioPatch
-    {
-        static void Prefix(DefeatScenariosManager __instance, DefeatScenario _scenario)
-        {
-            Mounts.DebugLog($"Destroying all mounts before defeat scenario.");
-            Mounts.MountManager.DestroyAllMountInstances();
-        }
-    }*/
-
+    // Patch to remove mounts before changing the level
     [HarmonyPatch(typeof(NetworkLevelLoader), nameof(NetworkLevelLoader.BaseLoadLevel))]
     public class NetworkLevelLoader_BaseLoadLevel
     {
