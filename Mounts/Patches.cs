@@ -9,18 +9,29 @@ namespace Mounts
     {
         static void Postfix(Character __instance)
         {
+            //TODO: only add when required? currently also adds for some npcs
             Mounts.DebugTrace($"Adding CharacterMount to {__instance.Name}");
             __instance.gameObject.AddComponent<CharacterMount>();
         }
     }
 
     // Dismount mount before dying
-    [HarmonyPatch(typeof(DefeatScenariosManager), nameof(DefeatScenariosManager.ActivateDefeatScenario))]
+    /*[HarmonyPatch(typeof(DefeatScenariosManager), nameof(DefeatScenariosManager.ActivateDefeatScenario))]
     public class DefeatScenarioPatch
     {
         static void Prefix(DefeatScenariosManager __instance, DefeatScenario _scenario)
         {
             Mounts.DebugLog($"Destroying all mounts before defeat scenario.");
+            Mounts.MountManager.DestroyAllMountInstances();
+        }
+    }*/
+
+    [HarmonyPatch(typeof(NetworkLevelLoader), nameof(NetworkLevelLoader.BaseLoadLevel))]
+    public class NetworkLevelLoader_BaseLoadLevel
+    {
+        static void Prefix(NetworkLevelLoader __instance)
+        {
+            Mounts.DebugLog($"Destroying all mounts before loading level.");
             Mounts.MountManager.DestroyAllMountInstances();
         }
     }
@@ -41,8 +52,6 @@ namespace Mounts
         }
     }
 
-    //TODO: do the same for itemdisplays
-    
     public class SkillOverridePatches
     {
         static bool ForceCastSkill(Skill __instance)
@@ -77,6 +86,7 @@ namespace Mounts
             return true;
         }
 
+        // Forces dismount skills when activating a skill from the skill menu
         [HarmonyPatch(typeof(ItemDisplay), nameof(ItemDisplay.TryUse))]
         class ItemDisplay_TryUse
         {
@@ -97,6 +107,7 @@ namespace Mounts
             }
         }
 
+        // Forces dismount skills when activating a skill from a quickslot
         [HarmonyPatch(typeof(Skill), nameof(Skill.QuickSlotUse))]
         class Skill_QuickSlotUse
         {

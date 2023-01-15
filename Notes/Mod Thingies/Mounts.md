@@ -2,7 +2,7 @@ base: https://github.com/Grim-/Outward.Mount
 
 ### TODO:
 - add new textures for items + skills
-- change npcs
+- change npcs (clothing, names, position)
 - add quests
 - add mounts
 - remove unused old mounts

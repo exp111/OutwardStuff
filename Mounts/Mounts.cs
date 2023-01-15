@@ -294,6 +294,9 @@ namespace Mounts
             BuildDialouge(graph, character);
         }
 
+        //TODO: add mount buy
+        //TODO: add mount name + price as parameters
+        //TODO: add other quests as param (as a list?)
         private void BuildDialouge(DialogueTree graph, Character character)
         {
             var ourActor = graph.actorParameters[0];

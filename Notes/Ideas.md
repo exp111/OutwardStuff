@@ -1,5 +1,5 @@
 * Allow Trogs to sit => needs AnimationController override, see [[Custom Animations]]
-* mounts => also needs animations => take https://github.com/Grim-/Outward.Mount and make it less cbt
+* mounts => [[Mounts]]
 * ~~Item Randomizer~~ => [[Item Randomizer]]
 * Mob Spawn/Enemy Randomizer
 * Spell/Effect Randomizer
@@ -30,4 +30,5 @@
 * unityexplorer addon with outward specific stuff like "inspect localplayer", "inspect inventory/backpack", "show items", inspect focused enemy (maybe with a script?)
 * Gothic weapons/world/quests
 * elemental bullets
+* summoner: Spawn ie pet pearlbirds that attack
 
