@@ -1,0 +1,7 @@
+{
+    "name": "SharedMoan",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/exp111/OutwardStuff",
+    "description": "Syncs the moan of the lady in Berg with other players (important).",
+    "dependencies": ["BepInEx-BepInExPack_Outward-5.4.19"]
+}

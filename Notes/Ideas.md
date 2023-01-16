@@ -24,11 +24,12 @@
 * backpack throw skill
 * ragdoll cannon momentum based dmg => do into skill? (needs landing sensor to make better)
 * transform weapon (can transform into different weapon types, bloodborne/mh like)
-* synced old woman moan in berg (important)
+* synced old woman moan in berg (important) => [[SyncedMoan]]
 * ~~loading screen time logger~~ => natively implemented in NetworkLevelLoader.FinishLoadLevel via Debug.Log
 * druid transform into mob spell/class
 * unityexplorer addon with outward specific stuff like "inspect localplayer", "inspect inventory/backpack", "show items", inspect focused enemy (maybe with a script?)
 * Gothic weapons/world/quests
 * elemental bullets
 * summoner: Spawn ie pet pearlbirds that attack
-
+* LAN mp
+* sit skill for meditation

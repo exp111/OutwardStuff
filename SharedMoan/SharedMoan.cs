@@ -85,6 +85,14 @@ namespace SharedMoan
             Instance = this;
         }
 
+        // Whitelisted sounds that can be played
+        public static readonly Dictionary<GlobalAudioManager.Sounds, bool> AllowedSounds = new()
+        {
+            { GlobalAudioManager.Sounds.LOC_EXCL_Mumble_QuietWoman01, true },
+            { GlobalAudioManager.Sounds.LOC_EXCL_Mumble_QuietWoman02, true },
+            { GlobalAudioManager.Sounds.LOC_EXCL_Mumble_QuietWoman03, true }
+        };
+
         [HarmonyPrefix]
         public static void Postfix(PlaySound __instance)
         {
@@ -96,10 +104,7 @@ namespace SharedMoan
                     SharedMoan.DebugTrace($"Sending sound...");
                     Instance.photonView.RPC(nameof(PlaySoundAt), PhotonTargets.Others, new object[]
                     {
-                    __instance.Sound,
-                    __instance.PlayAt,
-                    __instance.TransPos,
-                    __instance.Pos
+                        __instance.Sound
                     });
                 }
             }
@@ -109,38 +114,26 @@ namespace SharedMoan
             }
         }
 
-        public static readonly Dictionary<GlobalAudioManager.Sounds, bool> AllowedSounds = new()
-        {
-            { GlobalAudioManager.Sounds.LOC_EXCL_Mumble_QuietWoman01, true },
-            { GlobalAudioManager.Sounds.LOC_EXCL_Mumble_QuietWoman02, true },
-            { GlobalAudioManager.Sounds.LOC_EXCL_Mumble_QuietWoman03, true }
-        };
-
         [PunRPC]
-        private void PlaySoundAt(GlobalAudioManager.Sounds sound, PlaySound.PositionType playAt, BBParameter<Transform> transPos, Vector3 pos)
+        private void PlaySoundAt(GlobalAudioManager.Sounds sound)
         {
-            SharedMoan.DebugLog($"PlaySoundAt: {sound}, {playAt}, {transPos}, {pos}");
-            if (AllowedSounds.ContainsKey(sound))
+            try
             {
-                SharedMoan.DebugTrace($"Playing sound...");
-                OnExecute(sound, playAt, transPos, pos);
+                SharedMoan.DebugLog($"PlaySoundAt: {sound}");
+                if (AllowedSounds.ContainsKey(sound))
+                {
+                    SharedMoan.DebugTrace($"Playing sound...");
+                }
+            }
+            catch (Exception e)
+            {
+                SharedMoan.Log.LogMessage($"Exception during PlaySoundAt RPC: {e}");
             }
         }
 
         // Stolen from PlaySound.OnExecute
-        private void OnExecute(GlobalAudioManager.Sounds Sound, PlaySound.PositionType PlayAt, BBParameter<Transform> TransPos, Vector3 Pos)
+        private void OnExecute(GlobalAudioManager.Sounds Sound)
         {
-            if (PlayAt == PlaySound.PositionType.Transform && TransPos.value != null)
-            {
-                Global.AudioManager.PlaySoundAndFollow(Sound, TransPos.value, 0f, 1f, 1f, 1f, 1f);
-                return;
-            }
-            else if (PlayAt == PlaySound.PositionType.Pos)
-            {
-                Global.AudioManager.PlaySoundAtPosition(Sound, Pos, 0f, 1f, 1f, 1f, 1f);
-                return;
-            }
-
             Global.AudioManager.PlaySound(Sound, 0f, 1f, 1f, 1f, 1f);
         }
     }
