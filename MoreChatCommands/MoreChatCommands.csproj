@@ -262,7 +262,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\Clear.cs" />
+    <Compile Include="Commands\Burn.cs" />
     <Compile Include="Commands\Skill.cs" />
+    <Compile Include="Commands\Hurt.cs" />
     <Compile Include="Commands\Time.cs" />
     <Compile Include="CustomDebugCmd.cs" />
     <Compile Include="Commands\Give.cs" />

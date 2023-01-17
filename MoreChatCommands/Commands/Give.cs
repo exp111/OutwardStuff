@@ -65,20 +65,16 @@ namespace MoreChatCommands
 
         public static void GiveItem(int itemID, int amount)
         {
-            if (SplitScreenManager.Instance.LocalPlayers.Count == 0)
-            {
-                ChatError("No players found.");
-                return;
-            }
-            var localPlayer = SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter;
+            var localPlayer = GetLocalPlayer();
             if (localPlayer == null)
             {
-                ChatError("Player has no character.");
+                ChatError("Couldn't get local player.");
                 return;
             }
 
             // abuse the item quest reward func so we get a info tooltip
             localPlayer.Inventory.ReceiveItemReward(itemID, amount, false);
+            ChatPrint($"Gave the player {amount}x item {itemID}.");
         }
     }
 }

@@ -33,15 +33,10 @@ namespace MoreChatCommands
 
         private bool List(string[] args)
         {
-            if (SplitScreenManager.Instance.LocalPlayers.Count == 0)
-            {
-                ChatError("No players found.");
-                return true;
-            }
-            var localPlayer = SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter;
+            var localPlayer = GetLocalPlayer();
             if (localPlayer == null)
             {
-                ChatError("Player has no character.");
+                ChatError("Couldn't get local player.");
                 return true;
             }
 

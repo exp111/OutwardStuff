@@ -11,11 +11,8 @@ namespace MoreChatCommands
     [BepInPlugin(ID, NAME, VERSION)]
     public class MoreChatCommands : BaseUnityPlugin
     {
-        // Choose a GUID for your project. Change "myname" and "mymod".
         public const string ID = "com.exp111.MoreChatCommands";
-        // Choose a NAME for your project, generally the same as your Assembly Name.
         public const string NAME = "MoreChatCommands";
-        // Increment the VERSION when you release a new version of your mod.
         public const string VERSION = "1.0";
 
         public static ManualLogSource Log;

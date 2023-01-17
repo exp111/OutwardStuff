@@ -48,15 +48,10 @@ namespace MoreChatCommands
 
         public static void SpawnItem(int itemID, int amount)
         {
-            if (SplitScreenManager.Instance.LocalPlayers.Count == 0)
-            {
-                ChatError("No players found.");
-                return;
-            }
-            var localPlayer = SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter;
+            var localPlayer = GetLocalPlayer();
             if (localPlayer == null)
             {
-                ChatError("Player has no character.");
+                ChatError("Couldn't get local player.");
                 return;
             }
 
@@ -71,6 +66,7 @@ namespace MoreChatCommands
                 if (item.HasMultipleUses) //TODO: else spawn more items?
                     item.GetComponent<MultipleUsage>().RemainingAmount = amount;
                 item.gameObject.AddComponent<SafeFalling>();
+                ChatPrint($"Spawned {amount}x item {item.Name} ({itemID})");
             }
         }
     }

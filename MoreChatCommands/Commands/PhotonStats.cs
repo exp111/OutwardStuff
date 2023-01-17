@@ -20,10 +20,12 @@ namespace MoreChatCommands
                 GameObject gameObject = new GameObject("PhotonStats");
                 Object.DontDestroyOnLoad(gameObject);
                 gameObject.AddComponent<PhotonStatsGui>().statsWindowOn = true;
+                ChatPrint($"Spawned PhotonStats window.");
             }
             else
             {
                 Object.Destroy(photon);
+                ChatPrint($"Destroyed PhotonStats window.");
             }
             return true;
         }

@@ -20,10 +20,12 @@ namespace MoreChatCommands
                 GameObject gameObject = new GameObject("HierarchyViewer");
                 Object.DontDestroyOnLoad(gameObject);
                 gameObject.AddComponent<SceneHierarchyViewer>();
+                ChatPrint($"Spawned HierarchyViewer window.");
             }
             else
             {
                 Object.Destroy(hierarchy);
+                ChatPrint($"Spawned HierarchyViewer window.");
             }
             return true;
         }

@@ -43,6 +43,7 @@ namespace MoreChatCommands
                 return true;
             }
             Instance.SetTODNoGameTime((float)wantedHour);
+            ChatPrint($"Time set to: {wantedHour} ({(float)wantedHour}:00).");
             return true;
         }
     }

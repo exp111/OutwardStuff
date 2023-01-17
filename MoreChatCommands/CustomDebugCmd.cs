@@ -48,5 +48,21 @@ namespace MoreChatCommands
             CharacterUI characterUI = SplitScreenManager.Instance.GetCharacterUI(0);
             return characterUI?.ChatPanel;
         }
+
+        protected static Character GetLocalPlayer()
+        {
+            if (SplitScreenManager.Instance.LocalPlayers.Count == 0)
+            {
+                MoreChatCommands.DebugTrace($"No local players exist.");
+                return null;
+            }
+            var localPlayer = SplitScreenManager.Instance.LocalPlayers[0].AssignedCharacter;
+            if (localPlayer == null)
+            {
+                MoreChatCommands.DebugTrace($"Local player has no character.");
+                return null;
+            }
+            return localPlayer;
+        }
     }
 }
