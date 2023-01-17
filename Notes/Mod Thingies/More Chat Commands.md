@@ -2,10 +2,10 @@ Ideas:
 - Better item spawn panel with thumbnails, description, filters (type)
 - Right click delete items
 - /tp area
-- /spawn enemy
+- /spawn enemy => https://www.nexusmods.com/outward/mods/216?
 - chat history with arrow controls
 - overwrite original commands or add better error handling to them => transpiler?
 - item info which takes item id list and shows them pretty, spawnable
-- /learn skill => f3 is filtered
 - fix invulnerability not working after rejoin
 - disable autosave completely (even on world exit)
+- /hurt

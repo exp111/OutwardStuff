@@ -295,7 +295,7 @@ namespace Mounts
         }
 
         //TODO: add mount buy
-        //TODO: add mount name + price as parameters
+        //TODO: add list<mount name + price> as parameters ("do you sell mounts?" > multi choice > buyitemnode)
         //TODO: add other quests as param (as a list?)
         private void BuildDialouge(DialogueTree graph, Character character)
         {

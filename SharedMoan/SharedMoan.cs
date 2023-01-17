@@ -14,11 +14,8 @@ namespace SharedMoan
     [BepInPlugin(ID, NAME, VERSION)]
     public class SharedMoan : BaseUnityPlugin
     {
-        // Choose a GUID for your project. Change "myname" and "mymod".
         public const string ID = "com.exp111.SharedMoan";
-        // Choose a NAME for your project, generally the same as your Assembly Name.
         public const string NAME = "SharedMoan";
-        // Increment the VERSION when you release a new version of your mod.
         public const string VERSION = "1.0";
 
         public const string RPCObjectName = "SharedMoanRPC";
@@ -36,9 +33,9 @@ namespace SharedMoan
                 Log.LogMessage("Awake");
                 DebugLog("Using a DEBUG build.");
 
-                // Harmony is for patching methods. If you're not patching anything, you can comment-out or delete this line.
                 harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
 
+                // Init rpc object
                 var obj = new GameObject(RPCObjectName);
                 DontDestroyOnLoad(obj);
                 obj.hideFlags |= HideFlags.HideAndDontSave;

@@ -17,3 +17,6 @@
 - TODO: find out where the right click aim is handled => `Weapon.SpecialIsZoom`?
 - more than 1 ammo is already coded (throug `ItemExtensions`: `SL_WeaponLoadoutItem.MaxProjectileLoaded`)
 - 
+
+
+https://outward.thunderstore.io/package/stormcancer/Crossbow_Master/??
