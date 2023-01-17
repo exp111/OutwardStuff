@@ -16,7 +16,10 @@
 - differentiated by `WeaponType`=`Pistol_OH`? (https://sinai-dev.github.io/OSLDocs/#/API/Enums/WeaponType) => maybe need to add own?
 - TODO: find out where the right click aim is handled => `Weapon.SpecialIsZoom`?
 - more than 1 ammo is already coded (throug `ItemExtensions`: `SL_WeaponLoadoutItem.MaxProjectileLoaded`)
-- 
+
+
+look into Reload Pistol skill? => if i want left click shot thatd be hard?
+cant use pistol skills
 
 
 https://outward.thunderstore.io/package/stormcancer/Crossbow_Master/??
