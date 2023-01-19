@@ -33,5 +33,5 @@
 * summoner: Spawn ie pet pearlbirds that attack
 * LAN mp
 * ~~sit skill for meditation~~
-* graph visualizer for quests/dialogs
+* graph visualizer for quests/dialogs (generic NodeCanvas viewer?)
 * Sideloader multithreading?

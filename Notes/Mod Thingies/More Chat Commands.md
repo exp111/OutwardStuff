@@ -8,3 +8,5 @@ Ideas:
 - item info which takes item id list and shows them pretty, spawnable
 - fix invulnerability not working after rejoin
 - disable autosave completely (even on world exit)
+- /date set
+- disable videocamera on debugtoggle
