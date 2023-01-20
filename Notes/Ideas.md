@@ -35,3 +35,5 @@
 * ~~sit skill for meditation~~
 * graph visualizer for quests/dialogs (generic NodeCanvas viewer?)
 * Sideloader multithreading?
+* need to buy map first before seeing it ingame (else grey screen or just area image)
+* debug menu area tp names (Dungeon2 => Dungeon 2 (Giant's Village))

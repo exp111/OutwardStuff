@@ -131,6 +131,7 @@ namespace SharedMoan
         // Stolen from PlaySound.OnExecute
         private void OnExecute(GlobalAudioManager.Sounds Sound)
         {
+            // currently this is playing at the camera, but imo thats fine atm
             Global.AudioManager.PlaySound(Sound, 0f, 1f, 1f, 1f, 1f);
         }
     }

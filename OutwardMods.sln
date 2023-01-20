@@ -29,7 +29,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedMoan", "SharedMoan\Sh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkilledAtMeditation", "SkilledAtMeditation\SkilledAtMeditation.csproj", "{F58BA851-9161-4C37-A53A-8B7160761B1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuestGraphDumper", "QuestGraphDumper\QuestGraphDumper.csproj", "{30341005-2843-4D47-A9CA-8205D4ABAB29}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphDumper", "QuestGraphDumper\GraphDumper.csproj", "{30341005-2843-4D47-A9CA-8205D4ABAB29}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoTimeLimits", "NoTimeLimits\NoTimeLimits.csproj", "{2E7EA33B-704A-467B-A8BE-9343F64A2268}"
 EndProject

@@ -278,7 +278,7 @@
   <ItemGroup>
     <Compile Include="Graph.cs" />
     <Compile Include="Patches.cs" />
-    <Compile Include="QuestGraphDumper.cs" />
+    <Compile Include="GraphDumper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

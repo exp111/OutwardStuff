@@ -2,6 +2,7 @@
 using BepInEx.Logging;
 using HarmonyLib;
 using MonoMod.RuntimeDetour;
+using NodeCanvas.DialogueTrees;
 using NodeCanvas.StateMachines;
 using System;
 using System.Diagnostics;
@@ -10,13 +11,13 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace QuestGraphDumper
+namespace GraphDumper
 {
     [BepInPlugin(ID, NAME, VERSION)]
-    public class QuestGraphDumper : BaseUnityPlugin
+    public class GraphDumper : BaseUnityPlugin
     {
-        public const string ID = "com.exp111.QuestGraphDumper";
-        public const string NAME = "QuestGraphDumper";
+        public const string ID = "com.exp111.GraphDumper";
+        public const string NAME = "GraphDumper";
         public const string VERSION = "1.0";
 
         public static ManualLogSource Log;
@@ -33,7 +34,10 @@ namespace QuestGraphDumper
                 harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
 
                 //TODO: quests are only loaded ingame, so we need to either find a better point or manually trigger this per config button/keypress
-                DumpQuests();
+                //INFO: as we use scriptengine the plugininfo location isnt set
+                var path = "E:\\D\\Visual Studio\\Projects\\OutwardMods\\QuestGraphDumper\\out";
+                DumpQuests(path);
+                DumpDialogues(path);
             }
             catch (Exception e)
             {
@@ -41,25 +45,62 @@ namespace QuestGraphDumper
             }
         }
 
-        public void DumpQuests()
+        public void DumpQuests(string path)
         {
-            // gets all objects
+            var outFolder = Path.Combine(path, "quests");
+            if (Directory.Exists(outFolder)) // first delete the folder and any content inside
+                Directory.Delete(outFolder, true);
+            Directory.CreateDirectory(outFolder);
+            // gets all quests
             var questTrees = Resources.FindObjectsOfTypeAll<QuestTree>();
             DebugLog($"Found {questTrees.Length} quest trees");
             foreach (var questTree in questTrees) 
             {
-                DebugLog($"Dumping {questTree}");
-                DumpTree(questTree);
+                DebugLog($"Dumping quest {questTree}");
+                DumpTree(questTree, outFolder);
             }
         }
 
-        public void DumpTree(QuestTree tree)
+        public void DumpDialogues(string path)
+        {
+            var outFolder = Path.Combine(path, "dialogues");
+            if (Directory.Exists(outFolder)) // first delete the folder and any content inside
+                Directory.Delete(outFolder, true);
+            Directory.CreateDirectory(outFolder);
+                
+            // gets all dialogues
+            var dialogueTrees = Resources.FindObjectsOfTypeAll<DialogueTreeExt>();
+            DebugLog($"Found {dialogueTrees.Length} dialogues");
+            foreach (var dialogueTree in dialogueTrees)
+            {
+                DebugLog($"Dumping dialogue {dialogueTree}");
+                DumpTree(dialogueTree, outFolder);
+            }
+        }
+
+        private static string IterateFileName(string fileName)
+        {
+            if (!File.Exists(fileName)) 
+                return fileName;
+
+            FileInfo fi = new FileInfo(fileName);
+            string ext = fi.Extension;
+            string name = fi.FullName.Substring(0, fi.FullName.Length - ext.Length);
+
+            int i = 2;
+            while (File.Exists($"{name}_{i}{ext}"))
+            {
+                i++;
+            }
+
+            return $"{name}_{i}{ext}";
+        }
+
+        public void DumpTree(NodeCanvas.Framework.Graph tree, string folder)
         {
             var filename = $"{tree.name}.xml";
-            //INFO: as we use scriptengine the plugininfo location isnt set
-            var path = "E:\\D\\Visual Studio\\Projects\\OutwardMods\\QuestGraphDumper\\out";
-            //path = Directory.GetParent(path).FullName;
-            path = Path.Combine(path, filename);
+            var path = Path.Combine(folder, filename);
+            path = IterateFileName(path); // if a file exists, append a file
             DebugLog($"Dumping to {path}");
             var graph = new Graph(tree);
             DebugLog($"Created {graph}");

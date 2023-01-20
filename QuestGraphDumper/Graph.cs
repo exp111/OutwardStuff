@@ -1,161 +1,149 @@
-﻿using NodeCanvas.Framework;
-using NodeCanvas.StateMachines;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
-using UnityEngine;
-using UnityEngine.Networking.Types;
-using static Unity.Audio.Handle;
 
-namespace QuestGraphDumper
+#pragma warning disable CS0618 // GoToNode is deprecated
+namespace GraphDumper
 {
     public class Graph
     {
         public List<Node> Nodes;
         [XmlIgnore]
-        Dictionary<NodeCanvas.Framework.Node, int> NodeIDs;
-        public Graph(QuestTree tree) 
+        internal Dictionary<NodeCanvas.Framework.Node, int> NodeIDs;
+        public Graph(NodeCanvas.Framework.Graph tree)
         {
-            QuestGraphDumper.DebugLog($"Creating graph from {tree}");
+            GraphDumper.DebugLog($"Creating graph from {tree}");
             Nodes = new();
             NodeIDs = new();
             var i = 0;
             foreach (var node in tree.allNodes)
             {
-                QuestGraphDumper.DebugLog($"{i}: {node}");
-                Node newNode = null;
-                if (node is NodeCanvas.StateMachines.ActionState actionState)
-                    newNode = new ActionState(actionState, i);
-                else if (node is NodeCanvas.StateMachines.ConcurrentState concurState)
-                    newNode = new ConcurrentState(concurState, i);
-                else if (node is NodeCanvas.StateMachines.AnyState anyState)
-                    newNode = new AnyState(anyState, i);
+                GraphDumper.DebugLog($"{i}: {node}");
+                Node newNode = node switch
+                {
+                    NodeCanvas.StateMachines.ActionState actionState => new ActionState(this, actionState, i),
+                    NodeCanvas.StateMachines.ConcurrentState concurState => new ConcurrentState(this, concurState, i),
+                    NodeCanvas.DialogueTrees.ActionNode actionNode => new ActionNode(this, actionNode, i),
+                    NodeCanvas.DialogueTrees.FinishNode finishNode => new FinishNode(this, finishNode, i),
+                    NodeCanvas.DialogueTrees.ConditionNode conditionNode => new ConditionNode(this, conditionNode, i),
+                    NodeCanvas.DialogueTrees.GoToNode gotoNode => new GoToNode(this, gotoNode, i),
+                    NodeCanvas.DialogueTrees.StatementNode statementNode => new StatementNode(this, statementNode, i),
+                    NodeCanvas.DialogueTrees.StatementNodeExt statementNodeExt => new StatementNodeExt(this, statementNodeExt, i),
+                    NodeCanvas.DialogueTrees.MultipleChoiceNode multiChoiceNode => new MultipleChoiceNode(this, multiChoiceNode, i),
+                    NodeCanvas.DialogueTrees.MultipleChoiceNodeExt multiChoiceNodeExt => new MultipleChoiceNodeExt(this, multiChoiceNodeExt, i),
+                    _ => new Node(this, node, i),
+                };
+                //TODO: include dialogue nodes
+                // MultipleChoice node
 
-                QuestGraphDumper.DebugLog($"Created node {newNode}");
+                GraphDumper.DebugLog($"Created node {newNode}");
                 Nodes.Add(newNode);
                 NodeIDs.Add(node, i);
                 i++;
             }
 
-            //TODO: insert right ids into connections
+            // insert right ids into connections
             foreach (var node in Nodes)
             {
-                node.Connect(NodeIDs);
+                node.Connect();
             }
         }
 
         public Graph()
         {
-            QuestGraphDumper.DebugLog($"Creating empty graph");
+            GraphDumper.DebugLog($"Creating empty graph");
             Nodes = new();
             NodeIDs = new();
         }
     }
 
+    //INFO: the xmlserializer needs to know all subtypes so we just xmlinclude them here
+    [XmlInclude(typeof(FSMConnection))]
     public class Connection
     {
-        public string Condition;
         public int TargetID;
 
-        public Connection(string condition, int target)
+        public Connection(Graph graph, NodeCanvas.Framework.Connection connection)
         {
-            Condition = condition;
-            TargetID = target;
+            if (!graph.NodeIDs.TryGetValue(connection.targetNode, out var targetID))
+                throw new Exception("TargetNode has no ID");
+            TargetID = targetID;
         }
 
         public Connection()
         {
-            QuestGraphDumper.DebugLog($"Creating empty connection");
+            GraphDumper.DebugLog($"Creating empty connection");
+        }
+    }
+
+    public class FSMConnection : Connection
+    {
+        public string Condition;
+        public FSMConnection(Graph graph, NodeCanvas.StateMachines.FSMConnection connection) : base(graph, connection)
+        {
+            var condition = "";
+            if (connection.condition != null)
+                condition = connection.condition.summaryInfo;
+            Condition = condition;
+        }
+
+        public FSMConnection()
+        {
+            GraphDumper.DebugLog($"Creating empty fsm connection");
         }
     }
 
     //INFO: the xmlserializer needs to know all subtypes so we just xmlinclude them here
     [XmlInclude(typeof(ActionState))]
     [XmlInclude(typeof(ConcurrentState))]
-    [XmlInclude(typeof(AnyState))]
+    [XmlInclude(typeof(ActionNode))]
+    [XmlInclude(typeof(ConditionNode))]
+    [XmlInclude(typeof(FinishNode))]
+    [XmlInclude(typeof(GoToNode))]
+    [XmlInclude(typeof(StatementNode))]
+    [XmlInclude(typeof(StatementNodeExt))]
+    [XmlInclude(typeof(MultipleChoiceNode))]
+    [XmlInclude(typeof(MultipleChoiceNodeExt))]
     public class Node
     {
         public int ID;
         public string Name;
         public List<Connection> Outgoing;
-        private NodeCanvas.Framework.Node original;
+        [XmlIgnore]
+        protected NodeCanvas.Framework.Node original;
+        [XmlIgnore]
+        protected Graph _graph;
 
-        public Node(NodeCanvas.StateMachines.FSMState node, int id)
+        public Node(Graph graph, NodeCanvas.Framework.Node node, int id)
         {
+            GraphDumper.DebugLog($"Creating node with original type of {node.GetType()}");
             Outgoing = new();
             ID = id;
             Name = node.name;
 
             original = node;
+            _graph = graph;
         }
 
         public Node()
         {
-            QuestGraphDumper.DebugLog($"Creating empty node");
+            GraphDumper.DebugLog($"Creating empty node");
         }
 
-        public void Connect(Dictionary<NodeCanvas.Framework.Node, int> NodeIDs)
+        public virtual void Connect()
         {
             foreach (var outgoing in original.outConnections)
             {
-                if (outgoing is not FSMConnection fsmConnection)
-                    throw new Exception("Connection is not a FSMConnection");
-
-                if (!NodeIDs.TryGetValue(outgoing.targetNode, out var targetID))
-                    throw new Exception("TargetNode has no ID");
-
-                //TODO: better field than info? summaryInfo?
-                var text = "";
-                if (fsmConnection.condition != null)
-                    text = Sanitize(fsmConnection.condition.summaryInfo);
-                Outgoing.Add(new Connection(text, targetID));
-            }
-        }
-
-        //TODO: transform to patches?
-        public string TaskString(NodeCanvas.Framework.Task task)
-        {
-            if (task is ActionTask)
-            {
-                return (task.agentIsOverride ? "* " : "") + task.info;
-            }
-            if (task is ConditionTask conditionTask)
-            {
-                return (task.agentIsOverride ? "* " : "") + (conditionTask.invert ? "If ! " : "If ") + task.info;
-            }
-            return task.info;
-        }
-        public string ActionListString(NodeCanvas.Framework.ActionList actionList)
-        {
-            string text = (actionList.actions.Count > 1) ?
-                    (actionList.executionMode == NodeCanvas.Framework.ActionList.ActionsExecutionMode.ActionsRunInSequence
-                        ? "In Sequence" : "In Parallel")
-                    : string.Empty;
-            for (int i = 0; i < actionList.actions.Count; i++)
-            {
-                var task = actionList.actions[i];
-                text += $"- {TaskString(task)}{((i == actionList.actions.Count - 1) ? "" : "\n")}";
-            }
-            return text;
-        }
-        public string ConditionListString(NodeCanvas.Framework.ConditionList conditionList)
-        {
-            string text = (conditionList.conditions.Count > 1) ? ("(" + (conditionList.allTrueRequired ? "ALL True" : "ANY True") + ")\n") : string.Empty;
-            for (int i = 0; i < conditionList.conditions.Count; i++)
-            {
-                if (conditionList.conditions[i] != null && (conditionList.conditions[i].isActive || (conditionList.initialActiveConditions != null && conditionList.initialActiveConditions.Contains(conditionList.conditions[i]))))
+                Connection connection = outgoing switch
                 {
-                    string str = "- ";
-                    text = text + str + TaskString(conditionList.conditions[i]) + ((i == conditionList.conditions.Count - 1) ? "" : "\n");
-                }
+                    NodeCanvas.StateMachines.FSMConnection fsmConnection => new FSMConnection(_graph, fsmConnection),
+                    _ => new Connection(_graph, outgoing),
+                };
+                Outgoing.Add(connection);
             }
-            return text;
         }
 
+        //TODO: patch html tags away?
         public string Sanitize(string text)
         {
             //TODO: remove html tags?
@@ -163,64 +151,233 @@ namespace QuestGraphDumper
         }
     }
 
-    [Serializable]
     public class ActionState : Node
     {
         //TODO: as list?
         public string ActionList;
-        public ActionState(NodeCanvas.StateMachines.ActionState node, int ID) : base(node, ID)
+        public ActionState(Graph graph, NodeCanvas.StateMachines.ActionState node, int ID) : base(graph, node, ID)
         {
             ActionList = "";
             if (node.actionList != null)
-                ActionList = Sanitize(node.actionList.info);
+                ActionList = Sanitize(node.actionList.summaryInfo);
         }
 
         public ActionState()
         {
-            QuestGraphDumper.DebugLog($"Creating empty ActionState");
+            GraphDumper.DebugLog($"Creating empty ActionState");
         }
     }
 
-
-
-    [Serializable]
     public class ConcurrentState : Node
     {
         //TODO: do as lists?
         public string ConditionList;
         public string ActionList;
-        public ConcurrentState(NodeCanvas.StateMachines.ConcurrentState node, int ID) : base(node, ID)
+        public ConcurrentState(Graph graph, NodeCanvas.StateMachines.ConcurrentState node, int ID) : base(graph, node, ID)
         {
             //TODO: better stringify than this?
             ConditionList = "";
             if (node.conditionList != null)
             {
-                ConditionList = Sanitize(node.conditionList.info);
+                ConditionList = Sanitize(node.conditionList.summaryInfo);
             }
             ActionList = "";
             if (node.actionList != null)
             {
-                ActionList = Sanitize(node.actionList.info);
+                ActionList = Sanitize(node.actionList.summaryInfo);
             }
         }
 
         public ConcurrentState()
         {
-            QuestGraphDumper.DebugLog($"Creating empty ConcurrentState");
+            GraphDumper.DebugLog($"Creating empty ConcurrentState");
+        }
+    }
+
+    public class ActionNode : Node
+    {
+        //TODO: as list?
+        public string ActionList;
+        public ActionNode(Graph graph, NodeCanvas.DialogueTrees.ActionNode node, int ID) : base(graph, node, ID)
+        {
+            ActionList = "";
+            if (node.action != null)
+                ActionList = Sanitize(node.action.summaryInfo);
+        }
+
+        public ActionNode()
+        {
+            GraphDumper.DebugLog($"Creating empty ActionNode");
+        }
+    }
+
+    public class ConditionNode : Node
+    {
+        public string Condition;
+        public ConditionNode(Graph graph, NodeCanvas.DialogueTrees.ConditionNode node, int ID) : base(graph, node, ID)
+        {
+            Condition = "";
+            if (node.condition != null)
+                Condition = Sanitize(node.condition.summaryInfo);
+        }
+
+        public ConditionNode()
+        {
+            GraphDumper.DebugLog($"Creating empty ConditionNode");
+        }
+    }
+
+    public class FinishNode : Node
+    {
+        public string FinishState;
+        public FinishNode(Graph graph, NodeCanvas.DialogueTrees.FinishNode node, int ID) : base(graph, node, ID)
+        {
+            FinishState = node.finishState.ToString();
+        }
+
+        public FinishNode()
+        {
+            GraphDumper.DebugLog($"Creating empty FinishNode");
+        }
+    }
+
+    public class GoToNode : Node
+    {
+        public int Target;
+        public GoToNode(Graph graph, NodeCanvas.DialogueTrees.GoToNode node, int ID) : base(graph, node, ID)
+        {
+            // connect target at the end
+        }
+
+        public override void Connect()
+        {
+            base.Connect();
+            if (_graph.NodeIDs.TryGetValue(original, out var targetID))
+                Target = targetID;
+        }
+
+        public GoToNode()
+        {
+            GraphDumper.DebugLog($"Creating empty GoToNode");
         }
     }
 
     [Serializable]
-    public class AnyState : Node
+    public class Statement
     {
-        public AnyState(NodeCanvas.StateMachines.AnyState node, int ID) : base(node, ID)
+        public string Text;
+        public string Audio;
+        public string Meta;
+        public Statement(NodeCanvas.DialogueTrees.Statement statement)
         {
-            //nothing here yet
+            Text = statement.text;
+            Audio = statement.audio.ToString();
+            Meta = statement.meta;
         }
 
-        public AnyState()
+        public Statement()
         {
-            QuestGraphDumper.DebugLog($"Creating empty AnyState");
+            GraphDumper.DebugLog($"Creating empty Statement");
+        }
+    }
+
+    public class StatementNodeExt : Node
+    {
+        public Statement Statement;
+        public StatementNodeExt(Graph graph, NodeCanvas.DialogueTrees.StatementNodeExt node, int ID) : base(graph, node, ID)
+        {
+            Statement = new Statement(node.statement);
+        }
+
+        public StatementNodeExt()
+        {
+            GraphDumper.DebugLog($"Creating empty StatementNodeExt");
+        }
+    }
+
+    public class StatementNode : Node
+    {
+        public Statement Statement;
+        public StatementNode(Graph graph, NodeCanvas.DialogueTrees.StatementNode node, int ID) : base(graph, node, ID)
+        {
+            Statement = new Statement(node.statement);
+        }
+
+        public StatementNode()
+        {
+            GraphDumper.DebugLog($"Creating empty StatementNode");
+        }
+    }
+
+    [Serializable]
+    public class Choice
+    {
+        public Statement Statement;
+        public string Condition;
+        public Choice(NodeCanvas.DialogueTrees.MultipleChoiceNode.Choice choice)
+        {
+            Statement = new Statement(choice.statement);
+            Condition = "";
+            if (choice.condition != null) 
+            {
+                Condition = choice.condition.summaryInfo;
+            }
+        }
+
+        public Choice(NodeCanvas.DialogueTrees.MultipleChoiceNodeExt.Choice choice)
+        {
+            Statement = new Statement(choice.statement);
+            Condition = "";
+            if (choice.condition != null)
+            {
+                Condition = choice.condition.summaryInfo;
+            }
+        }
+
+        public Choice()
+        {
+            GraphDumper.DebugLog($"Creating empty Choice");
+        }
+    }
+
+    public class MultipleChoiceNode : Node
+    {
+        public float AvailableTime;
+        public List<Choice> Choices;
+        public MultipleChoiceNode(Graph graph, NodeCanvas.DialogueTrees.MultipleChoiceNode node, int ID) : base(graph, node, ID)
+        {
+            Choices = new();
+            AvailableTime = node.availableTime;
+            foreach (var choice in node.availableChoices)
+            {
+                Choices.Add(new Choice(choice));
+            }
+        }
+
+        public MultipleChoiceNode()
+        {
+            GraphDumper.DebugLog($"Creating empty MultipleChoiceNode");
+        }
+    }
+
+    public class MultipleChoiceNodeExt : Node
+    {
+        public float AvailableTime;
+        public List<Choice> Choices;
+        public MultipleChoiceNodeExt(Graph graph, NodeCanvas.DialogueTrees.MultipleChoiceNodeExt node, int ID) : base(graph, node, ID)
+        {
+            Choices = new();
+            AvailableTime = node.availableTime;
+            foreach (var choice in node.availableChoices)
+            {
+                Choices.Add(new Choice(choice));
+            }
+        }
+
+        public MultipleChoiceNodeExt()
+        {
+            GraphDumper.DebugLog($"Creating empty MultipleChoiceNodeExt");
         }
     }
 }
+#pragma warning restore CS0618

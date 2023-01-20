@@ -6,16 +6,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace QuestGraphDumper
+namespace GraphDumper
 {
+#if DEBUG
     [HarmonyDebug]
+#endif
     [HarmonyPatch(typeof(QuestAction_AddLogEntry), nameof(QuestAction_AddLogEntry.info), MethodType.Getter)]
     public class QuestAction_AddLogEntry_Patch
     {
         // removes the splicetext
         static void Postfix(QuestAction_AddLogEntry __instance, ref string __result)
         {
-            QuestGraphDumper.DebugLog($"Removing splice");
+            GraphDumper.DebugLog($"Removing splice");
             string str;
             if (__instance.AssociatedLogType == QuestAction_AddLogEntry.LogType.SimpleText || __instance.m_logSignatureUID.IsNull || !__instance.IsCompleted)
             {

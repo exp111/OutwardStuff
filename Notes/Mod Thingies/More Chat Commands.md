@@ -10,3 +10,4 @@ Ideas:
 - disable autosave completely (even on world exit)
 - /date set
 - disable videocamera on debugtoggle
+- /wait days (`EnvironmentConditions.Instance.TimeJump`)
