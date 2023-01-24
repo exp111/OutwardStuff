@@ -37,3 +37,4 @@
 * Sideloader multithreading?
 * need to buy map first before seeing it ingame (else grey screen or just area image)
 * debug menu area tp names (Dungeon2 => Dungeon 2 (Giant's Village))
+* anti cheat (detect debug mode usage, require other players to also use that mod, send Global.Cheats on connect + kick

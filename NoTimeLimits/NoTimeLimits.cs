@@ -98,17 +98,31 @@ namespace NoTimeLimits
             { "WhispBones_StartTimer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Whispering Bones
             //// Heroic Kingdom
             { "MouthFeed_QuestTimer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Mouths to feed
-            { "HeroPeace_CyreneTimer", () => NoTimeLimits.DontExpireMainQuestTimers.Value },
+            { "HeroPeace_CyreneTimer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Heroic Peacemaker
             { "HeroPeace_TimerA", () => {NoTimeLimits.DebugLog("HeroPeace_TimerA"); return NoTimeLimits.DontExpireMainQuestTimers.Value; } },
             { "HeroPeace_TimerB", () => {NoTimeLimits.DebugLog("HeroPeace_TimerB"); return NoTimeLimits.DontExpireMainQuestTimers.Value; } },
-            ////TODO: holy mission + sorobor main quests
-            ////TODO: three brothers/sirocco
+            ////TODO: Holy Mission
+            // Questions and Corruption // Questions_Timer
+            // Doubts and Secrets // Doubts_Timer
+            // Truth and Purpose // Truth_Timer
+            // Hallowed Peacemaker // HallowPeace_TimerA // HallowPeace_TimerB
+            ////TODO: Sorobean
+            // Enrollment?
+            // Up The Ladder
+            // A Knife in the Back // SA_SabotageMercA, SA_SabotageMercB?
+            // Cloak and Dagger // SA_MissionStart_Q3? right timer, which quest?
+            // A House Divided // SA_Arcane_TaskHasBegun_Q4
+            ////TODO: Three Brothers
+            // A Fallen City?
+            // From the Ashes 
+            // Stealing Fire
+            // Liberate the Sun 
+            // Vengeful Ouroboros 
             // Parallel Quests
             { "SA_TimerEnds_Parallel", () => NoTimeLimits.DontExpireParallelQuestTimers.Value }, // Rust and Vengeance
             { "Purifier_Timer", () => NoTimeLimits.DontExpireParallelQuestTimers.Value }, // Purifier
             { "Vendavel_QuestTimer", () => NoTimeLimits.DontExpireParallelQuestTimers.Value }, // Vendavel
-            //TODO: blood under the soon
-            //TODO: Fraticide_Timer?
+            { "Fraticide_Timer", () => NoTimeLimits.DontExpireParallelQuestTimers.Value }, // Blood under the Sun
             // Minor Quests
             { "SideQuests_SmugglerTimer", () => NoTimeLimits.DontExpireMinorQuestTimers.Value }, // Lost Merchant
             //TODO: SideQuests_LetResearcherDied? SideQuests_FoodStoreMonsoonTimer?
