@@ -101,23 +101,23 @@ namespace NoTimeLimits
             { "HeroPeace_CyreneTimer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Heroic Peacemaker
             { "HeroPeace_TimerA", () => {NoTimeLimits.DebugLog("HeroPeace_TimerA"); return NoTimeLimits.DontExpireMainQuestTimers.Value; } },
             { "HeroPeace_TimerB", () => {NoTimeLimits.DebugLog("HeroPeace_TimerB"); return NoTimeLimits.DontExpireMainQuestTimers.Value; } },
-            ////TODO: Holy Mission
-            // Questions and Corruption // Questions_Timer
-            // Doubts and Secrets // Doubts_Timer
-            // Truth and Purpose // Truth_Timer
-            // Hallowed Peacemaker // HallowPeace_TimerA // HallowPeace_TimerB
-            ////TODO: Sorobean
-            // Enrollment?
-            // Up The Ladder
-            // A Knife in the Back // SA_SabotageMercA, SA_SabotageMercB?
-            // Cloak and Dagger // SA_MissionStart_Q3? right timer, which quest?
-            // A House Divided // SA_Arcane_TaskHasBegun_Q4
-            ////TODO: Three Brothers
-            // A Fallen City?
-            // From the Ashes 
-            // Stealing Fire
-            // Liberate the Sun 
-            // Vengeful Ouroboros 
+            //// Holy Mission
+            { "Questions_Timer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Questions and Corruption
+            { "Doubts_Timer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Doubts and Secrets
+            { "Truth_Timer", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Truth and Purpose
+            { "HallowPeace_TimerA", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Hallowed Peacemaker
+            { "HallowPeace_TimerB", () => NoTimeLimits.DontExpireMainQuestTimers.Value },
+            //// Sorobean
+            // TODO: havent found any timers for "Up The Ladder" and "A Knife in the Back" even though the wiki says they are "likely timed" wtf does this mean
+            { "SA_MissionStart_Q3", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Cloak and Dagger
+            { "SA_SabotageMercA", () => {NoTimeLimits.DebugLog("SA_SabotageMercA"); return NoTimeLimits.DontExpireMainQuestTimers.Value; } }, //TODO: check what those are
+            { "SA_SabotageMercB", () => {NoTimeLimits.DebugLog("SA_SabotageMercB"); return NoTimeLimits.DontExpireMainQuestTimers.Value; } },
+            { "SA_Arcane_TaskHasBegun_Q4", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // A House Divided
+            //// Three Brothers
+            { "CA_Q1_Timer_Start", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // From the Ashes
+            { "CA_Q2_Timer_Start", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Stealing Fire
+            { "CA_Q3_Timer_Start", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Liberate the Sun
+            { "CA_Q4_Timer_Start", () => NoTimeLimits.DontExpireMainQuestTimers.Value }, // Vengeful Ouroboros
             // Parallel Quests
             { "SA_TimerEnds_Parallel", () => NoTimeLimits.DontExpireParallelQuestTimers.Value }, // Rust and Vengeance
             { "Purifier_Timer", () => NoTimeLimits.DontExpireParallelQuestTimers.Value }, // Purifier
@@ -145,29 +145,36 @@ namespace NoTimeLimits
 
         static bool Prefix(QuestEventManager __instance, string _eventUID, int _gameHourAllowed, ref bool __result)
         {
-            //NoTimeLimits.DebugTrace($"QuestEventManager.CheckEventExpire checking {_eventUID} with time limit {_gameHourAllowed} hours.");
-            if (QuestEventManager.m_questEvents.TryGetValue(_eventUID, out var eventData))
+            try
             {
-                //NoTimeLimits.DebugLog($"Event: {eventData}, Name {eventData.Name}, Age {eventData.Age}");
-                if (ShouldntExpire.TryGetValue(eventData.Name, out var shouldntExpire))
+                //NoTimeLimits.DebugTrace($"QuestEventManager.CheckEventExpire checking {_eventUID} with time limit {_gameHourAllowed} hours.");
+                if (QuestEventManager.m_questEvents.TryGetValue(_eventUID, out var eventData))
                 {
-                    if (!shouldntExpire())
-                        return true; // run original
+                    //NoTimeLimits.DebugLog($"Event: {eventData}, Name {eventData.Name}, Age {eventData.Age}");
+                    if (ShouldntExpire.TryGetValue(eventData.Name, out var shouldntExpire))
+                    {
+                        if (!shouldntExpire())
+                            return true; // run original
 
-                    //NoTimeLimits.DebugTrace($"Forcing {eventData.Name} not to be expired");
-                    __result = false;
-                    return false; // skip
+                        //NoTimeLimits.DebugTrace($"Forcing {eventData.Name} not to be expired");
+                        __result = false;
+                        return false; // skip
+                    }
+
+                    if (ShouldSkip.TryGetValue(eventData.Name, out var shouldSkip))
+                    {
+                        if (!shouldSkip())
+                            return true; // run original
+
+                        //NoTimeLimits.DebugTrace($"Forcing {eventData.Name} to be expired");
+                        __result = true;
+                        return false; // skip
+                    }
                 }
-
-                if (ShouldSkip.TryGetValue(eventData.Name, out var shouldSkip))
-                {
-                    if (!shouldSkip())
-                        return true; // run original
-
-                    //NoTimeLimits.DebugTrace($"Forcing {eventData.Name} to be expired");
-                    __result = true;
-                    return false; // skip
-                }
+            }
+            catch (Exception e)
+            {
+                NoTimeLimits.Log.LogMessage($"Exception during QuestEventManager.CheckEventExpire prefix: {e}");
             }
             return true; // dont skip
         }
