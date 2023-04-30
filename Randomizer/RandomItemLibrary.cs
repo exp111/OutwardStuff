@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -327,5 +326,13 @@ namespace Randomizer
                 }
             }
         }
+
+        public static bool IsSimpleChest(int id) => id == 1000000 || id == 1000010 || id == 1000140;
+        public static bool IsOrnateChest(int id) => id == 1000040 || id == 1000050 || id == 1000120;
+        public static bool IsTrogChest(int id) => id == 1000060;
+        public static bool IsPile(int id) => id == 1000070 || id == 1000080 || id == 1000130 || id == 1001000;
+        public static bool IsCash(int id) => id == 1000110;
+        public static bool IsStash(int id) => id == 40;
+        public static bool IsCorpse(int id) => (id >= 1000090 && id <= 1000101) || id == 1000800;
     }
 }

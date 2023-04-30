@@ -36,7 +36,16 @@ namespace Randomizer
         public static ConfigEntry<bool> RandomizeEnemyWeapons;
         public static ConfigEntry<bool> RandomizeEnemyArmor;
         public static ConfigEntry<bool> RandomizeEnemyItems;
-        public static ConfigEntry<bool> RandomizeContainers; //TODO: rather RandomizeLoot?
+
+        public static ConfigEntry<bool> RandomizeContainers;
+        public static ConfigEntry<bool> RandomizeChests;
+        public static ConfigEntry<bool> RandomizeOrnateChests;
+        public static ConfigEntry<bool> RandomizeTrogChests;
+        public static ConfigEntry<bool> RandomizeStashes;
+        public static ConfigEntry<bool> RandomizeCaches;
+        public static ConfigEntry<bool> RandomizePiles;
+        public static ConfigEntry<bool> RandomizeCorpses;
+
         public static ConfigEntry<bool> RandomizeTrueRandom;
 
         public static ConfigEntry<bool> RestrictSameCategory;
@@ -96,13 +105,25 @@ namespace Randomizer
             // Randomize
             RandomizeMerchants = Config.Bind("General", "Randomize Merchants", true, "Randomize merchant inventories.");
             RandomizeGatherables = Config.Bind("General", "Randomize Gatherables", true, "Randomize gatherables like mining/fishing spots or berry bushes.");
-            RandomizeEnemyDrops = Config.Bind("General", "Randomize Enemy Drops", true, "Randomize enemy drops.");
-            RandomizeEnemyWeapons = Config.Bind("General", "Randomize Enemy Weapons", true, "Randomize enemy weapons.");
-            RandomizeEnemyArmor = Config.Bind("General", "Randomize Enemy Armor", true, "Randomize enemy armor.");
-            RandomizeEnemyItems = Config.Bind("General", "Randomize Enemy Items", false, "Randomize all spawned enemy items.");
-            RandomizeContainers = Config.Bind("General", "Randomize Containers", true, "Randomize containers like treasure chests or junk piles.");
             RandomizeTrueRandom = Config.Bind("General", "True Random", false, "Randomize every loot table completely random (even same enemy types will drop different things).");
 
+            // Enemy
+            RandomizeEnemyDrops = Config.Bind("Enemy Randomization", "Randomize Enemy Drops", true, "Randomize enemy drops.");
+            RandomizeEnemyWeapons = Config.Bind("Enemy Randomization", "Randomize Enemy Weapons", true, "Randomize enemy weapons.");
+            RandomizeEnemyArmor = Config.Bind("Enemy Randomization", "Randomize Enemy Armor", true, "Randomize enemy armor.");
+            RandomizeEnemyItems = Config.Bind("Enemy Randomization", "Randomize Enemy Items", false, "Randomize all spawned enemy items.");
+
+            // Containers
+            RandomizeContainers = Config.Bind("Container Randomization", "Container Randomization", true, "Sets if any container should be randomized.");
+            RandomizeChests = Config.Bind("Container Randomization", "Randomize Normal Chests", true, "Randomize normal chests.");
+            RandomizeOrnateChests = Config.Bind("Container Randomization", "Randomize Ornate Chests", true, "Randomize ornate chests.");
+            RandomizeTrogChests = Config.Bind("Container Randomization", "Randomize Trog Chests", true, "Randomize trog chests.");
+            RandomizeStashes = Config.Bind("Container Randomization", "Randomize Stashes", true, "Randomize the initial stash generation.");
+            RandomizeCaches = Config.Bind("Container Randomization", "Randomize Caches", true, "Randomize supply caches.");
+            RandomizePiles = Config.Bind("Container Randomization", "Randomize Piles", true, "Randomize junk piles or broken tents.");
+            RandomizeCorpses = Config.Bind("Container Randomization", "Randomize Corpses", true, "Randomize loot corpses.");
+
+            // 
             // Filter Options
             RestrictSameCategory = Config.Bind("Filters", "Restrict items to same category", true, "Keeps items in the same category (melee weapons only generate another melee weapon).");
             HideEquipmentNoIcon = Config.Bind("Filters", "Hide equipment with no icon", true, "Hides weapons and armor that has no icon. These are probably not meant for players to receive, but still work.");
@@ -280,8 +301,22 @@ namespace Randomizer
             {
                 if (__instance is Gatherable && !Randomizer.RandomizeGatherables.Value)
                     return;
-                else if (__instance is not Gatherable && !Randomizer.RandomizeContainers.Value)
-                    return;
+                else if (__instance is not Gatherable)
+                {
+                    if (!Randomizer.RandomizeContainers.Value)
+                        return;
+
+                    var id = __instance.ItemID;
+                    // detailed checks
+                    if ((!Randomizer.RandomizeChests.Value && RandomItemLibrary.IsSimpleChest(id)) ||
+                        (!Randomizer.RandomizeOrnateChests.Value && RandomItemLibrary.IsOrnateChest(id)) ||
+                        (!Randomizer.RandomizeTrogChests.Value && RandomItemLibrary.IsTrogChest(id)) ||
+                        (!Randomizer.RandomizeStashes.Value && RandomItemLibrary.IsStash(id)) ||
+                        (!Randomizer.RandomizeCaches.Value && RandomItemLibrary.IsCash(id)) ||
+                        (!Randomizer.RandomizePiles.Value && RandomItemLibrary.IsPile(id)) ||
+                        (!Randomizer.RandomizeCorpses.Value && RandomItemLibrary.IsCorpse(id)))
+                        return;
+                }
 
                 Randomizer.StartTimer();
                 Randomizer.DebugLog($"SelfFilledItemContainer.ProcessGenerateContent: instance: {__instance}, UID: {__instance.HolderUID}");
