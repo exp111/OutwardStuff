@@ -508,6 +508,7 @@ namespace Randomizer
     }
 
 
+    // Fix not all equipment being loaded from save
     [HarmonyPatch(typeof(ItemManager), nameof(ItemManager.OnReceiveItemSync))]
     static class ItemManagerReceiveItemPatch
     {
@@ -615,6 +616,26 @@ namespace Randomizer
                     var slot = equipment.EquipmentSlots[(int)equip.EquipSlot];
                     if (slot == null)
                         continue;
+
+                    // if we dont randomize the item, we dont need to delete the editor item (or else it wont spawn)
+                    // not really sure how this internally works (the starting equip items are probably just placeholders
+                    // for the editor items and our randomized items just get spawned)
+                    switch (equip.EquipSlot)
+                    {
+                        case EquipmentSlot.EquipmentSlotIDs.RightHand:
+                        case EquipmentSlot.EquipmentSlotIDs.LeftHand:
+                            if (!Randomizer.RandomizeEnemyWeapons.Value)
+                                continue;
+                            break;
+                        // dont randomize quiver ammo or backpack
+                        case EquipmentSlot.EquipmentSlotIDs.Quiver:
+                        case EquipmentSlot.EquipmentSlotIDs.Back:
+                            continue;
+                        default:
+                            if (!Randomizer.RandomizeEnemyArmor.Value)
+                                continue;
+                            break;
+                    }
 
                     // if we've got a editor item, it will spawn even though we have the startingequipment
                     // so we've gotta delete/remove that, so it wont be added later into the inventory

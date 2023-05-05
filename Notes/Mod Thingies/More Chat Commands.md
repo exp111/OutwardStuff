@@ -12,3 +12,4 @@ Ideas:
 - disable videocamera on debugtoggle
 - /wait days (`EnvironmentConditions.Instance.TimeJump`)
 - right click on map context menu to teleport
+- /spawnChest

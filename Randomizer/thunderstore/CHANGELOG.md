@@ -1,3 +1,6 @@
+1.1.7:
+- Fixed enemies having their weapon/armor deleted if weapon/armor randomization was disabled
+
 1.1.6:
 - Added options to filter out specific checks if you dont want them randomized. Should work on a blacklist basis, meaning if you dont change anything, it wont break anything. If you still have any problems or a chest that shouldn't be randomized is randomized, please open an issue on GitHub.
 
