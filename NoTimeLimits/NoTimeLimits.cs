@@ -29,11 +29,12 @@ namespace NoTimeLimits
         public static ConfigEntry<bool> DontExpireMinorQuestTimers;
 
         // Skips
-        public static ConfigEntry<int> SkipBlacksmithTimers;
-        public static ConfigEntry<int> SkipBetweenQuestTimers;
+        public static ConfigEntry<int> ChangeBlacksmithTimers;
+        public static ConfigEntry<int> ChangeBetweenQuestTimers;
         //TODO: caldera timers?
         //TODO: SkipInQuestTimers like "MouthFeed_ResearchTimer" or "WhispBones_GabAwayTime"
         //TODO: SkipMinor/RepeatableQuestTimers like "SideQuests_SmugglerTimerWait" or "Vendavel_CookJobDone"
+        public static ConfigEntry<int> ChangeBuildingTimers;
 
         public void Awake()
         {
@@ -59,12 +60,16 @@ namespace NoTimeLimits
             DontExpireParallelQuestTimers = Config.Bind("Expire Timers", "Parallel Quest Timers", true, "Don't let parallel quest timers expire. They still fail if you reach the 3rd faction quest.");
             DontExpireMinorQuestTimers = Config.Bind("Expire Timers", "Minor Quest Timers", true, "Don't let minor quest timers expire.");
 
-            var changeTimers = "Change Timers (in hours)";
             var suffix = "(-1 to use original, 0 to skip timer)";
-            SkipBlacksmithTimers = Config.Bind(changeTimers, "Blacksmith Timers", -1, 
+            var changeTimersHours = "Change Timers (in hours)";
+            ChangeBlacksmithTimers = Config.Bind(changeTimersHours, "Blacksmith Timers", -1,
                 new ConfigDescription($"Set Blacksmith crafting timers {suffix}.", new AcceptableValueRange<int>(-1, 24)));
-            SkipBetweenQuestTimers = Config.Bind(changeTimers, "Between Quest Timers", -1, 
+            ChangeBetweenQuestTimers = Config.Bind(changeTimersHours, "Between Quest Timers", -1,
                 new ConfigDescription($"Set timers that happen between main quests {suffix}.", new AcceptableValueRange<int>(-1, 72)));
+
+            var changeTimersDays = "Change Timers (in days)";
+            ChangeBuildingTimers = Config.Bind(changeTimersDays, "Building Timers", -1,
+                new ConfigDescription($"Set Building construction timers (per construction phase). Construction starts after 1 day {suffix}.", new AcceptableValueRange<int>(-1, 5)));
         }
 
         public void OnDestroy()
@@ -134,17 +139,17 @@ namespace NoTimeLimits
         static readonly Dictionary<string, Func<int>> ChangeTime = new()
         {
             // Crafting
-            {"Crafting_BergBlacksmithTimer", () => NoTimeLimits.SkipBlacksmithTimers.Value },
-            {"Crafting_CierzoBlacksmithTimer", () => NoTimeLimits.SkipBlacksmithTimers.Value },
-            {"Crafting_HarmattanBlacksmithTimer", () => NoTimeLimits.SkipBlacksmithTimers.Value },
-            {"Crafting_LevantBlacksmithTimer", () => NoTimeLimits.SkipBlacksmithTimers.Value },
-            {"Crafting_MonsoonBlacksmithTimer", () => NoTimeLimits.SkipBlacksmithTimers.Value },
+            {"Crafting_BergBlacksmithTimer", () => NoTimeLimits.ChangeBlacksmithTimers.Value },
+            {"Crafting_CierzoBlacksmithTimer", () => NoTimeLimits.ChangeBlacksmithTimers.Value },
+            {"Crafting_HarmattanBlacksmithTimer", () => NoTimeLimits.ChangeBlacksmithTimers.Value },
+            {"Crafting_LevantBlacksmithTimer", () => NoTimeLimits.ChangeBlacksmithTimers.Value },
+            {"Crafting_MonsoonBlacksmithTimer", () => NoTimeLimits.ChangeBlacksmithTimers.Value },
             // Quest Timers
-            {"General_DoneQuest0", () => NoTimeLimits.SkipBetweenQuestTimers.Value },
-            {"General_DoneQuest1", () => NoTimeLimits.SkipBetweenQuestTimers.Value },
-            {"General_DoneQuest2", () => NoTimeLimits.SkipBetweenQuestTimers.Value },
-            {"General_DoneQuest3", () => NoTimeLimits.SkipBetweenQuestTimers.Value },
-            {"General_DoneQuest4", () => NoTimeLimits.SkipBetweenQuestTimers.Value },
+            {"General_DoneQuest0", () => NoTimeLimits.ChangeBetweenQuestTimers.Value },
+            {"General_DoneQuest1", () => NoTimeLimits.ChangeBetweenQuestTimers.Value },
+            {"General_DoneQuest2", () => NoTimeLimits.ChangeBetweenQuestTimers.Value },
+            {"General_DoneQuest3", () => NoTimeLimits.ChangeBetweenQuestTimers.Value },
+            {"General_DoneQuest4", () => NoTimeLimits.ChangeBetweenQuestTimers.Value },
         };
 
         static bool Prefix(QuestEventManager __instance, string _eventUID, ref int _gameHourAllowed, ref bool __result)
@@ -188,6 +193,20 @@ namespace NoTimeLimits
                 NoTimeLimits.Log.LogMessage($"Exception during QuestEventManager.CheckEventExpire prefix: {e}");
             }
             return true; // dont skip
+        }
+    }
+
+#if DEBUG
+    [HarmonyDebug]
+#endif
+    [HarmonyPatch(typeof(Building.ConstructionPhase), nameof(Building.ConstructionPhase.GetConstructionTime))]
+    public class ConstructionPhase_GetConstructionTime
+    {
+        [HarmonyPrefix]
+        static void Prefix(Building.ConstructionPhase __instance)
+        {
+            if (NoTimeLimits.ChangeBuildingTimers.Value != -1)
+                __instance.m_constructionTime = NoTimeLimits.ChangeBuildingTimers.Value;
         }
     }
 }

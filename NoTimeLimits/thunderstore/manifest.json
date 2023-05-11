@@ -1,7 +1,7 @@
 {
     "name": "NoTimeLimits",
-    "version_number": "1.0.0",
+    "version_number": "1.0.1",
     "website_url": "https://github.com/exp111/OutwardStuff",
     "description": "Removes time limits and optionally skips some timers.",
-    "dependencies": ["BepInEx-BepInExPack_Outward-5.4.18"]
+    "dependencies": ["BepInEx-BepInExPack_Outward-5.4.19"]
 }

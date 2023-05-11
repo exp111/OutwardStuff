@@ -1,0 +1,1 @@
+"C:\Program Files\7-Zip\7z.exe" a -tzip "noTimeLimits.zip" "plugins/" "manifest.json" "README.md" "CHANGELOG.md" "icon.png" -aoa
