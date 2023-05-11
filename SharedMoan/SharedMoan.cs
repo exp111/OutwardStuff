@@ -91,7 +91,7 @@ namespace SharedMoan
         };
 
         [HarmonyPrefix]
-        public static void Postfix(PlaySound __instance)
+        public static void Prefix(PlaySound __instance)
         {
             try
             {
