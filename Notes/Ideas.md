@@ -39,3 +39,4 @@
 * ~~debug menu area tp names (Dungeon2 => Dungeon 2 (Giant's Village))~~ => DebugMode
 * anti cheat (detect debug mode usage, require other players to also use that mod, send Global.Cheats on connect + kick
 * right click on map to get pos/teleport
+* teleport to misc dungeons

@@ -29,8 +29,8 @@ namespace NoTimeLimits
         public static ConfigEntry<bool> DontExpireMinorQuestTimers;
 
         // Skips
-        public static ConfigEntry<bool> SkipBlacksmithTimers;
-        public static ConfigEntry<bool> SkipBetweenQuestTimers;
+        public static ConfigEntry<int> SkipBlacksmithTimers;
+        public static ConfigEntry<int> SkipBetweenQuestTimers;
         //TODO: caldera timers?
         //TODO: SkipInQuestTimers like "MouthFeed_ResearchTimer" or "WhispBones_GabAwayTime"
         //TODO: SkipMinor/RepeatableQuestTimers like "SideQuests_SmugglerTimerWait" or "Vendavel_CookJobDone"
@@ -59,8 +59,12 @@ namespace NoTimeLimits
             DontExpireParallelQuestTimers = Config.Bind("Expire Timers", "Parallel Quest Timers", true, "Don't let parallel quest timers expire. They still fail if you reach the 3rd faction quest.");
             DontExpireMinorQuestTimers = Config.Bind("Expire Timers", "Minor Quest Timers", true, "Don't let minor quest timers expire.");
 
-            SkipBlacksmithTimers = Config.Bind("Skip Timers", "Blacksmith Timers", false, "Skip blacksmith crafting timers.");
-            SkipBetweenQuestTimers = Config.Bind("Skip Timers", "Between Quest Timers", false, "Skip timers that happen between main quests.");
+            var changeTimers = "Change Timers (in hours)";
+            var suffix = "(-1 to use original, 0 to skip timer)";
+            SkipBlacksmithTimers = Config.Bind(changeTimers, "Blacksmith Timers", -1, 
+                new ConfigDescription($"Set Blacksmith crafting timers {suffix}.", new AcceptableValueRange<int>(-1, 24)));
+            SkipBetweenQuestTimers = Config.Bind(changeTimers, "Between Quest Timers", -1, 
+                new ConfigDescription($"Set timers that happen between main quests {suffix}.", new AcceptableValueRange<int>(-1, 72)));
         }
 
         public void OnDestroy()
@@ -127,7 +131,7 @@ namespace NoTimeLimits
             { "SideQuests_SmugglerTimer", () => NoTimeLimits.DontExpireMinorQuestTimers.Value }, // Lost Merchant
             //TODO: SideQuests_LetResearcherDied? SideQuests_FoodStoreMonsoonTimer?
         };
-        static readonly Dictionary<string, Func<bool>> ShouldSkip = new()
+        static readonly Dictionary<string, Func<int>> ChangeTime = new()
         {
             // Crafting
             {"Crafting_BergBlacksmithTimer", () => NoTimeLimits.SkipBlacksmithTimers.Value },
@@ -143,7 +147,7 @@ namespace NoTimeLimits
             {"General_DoneQuest4", () => NoTimeLimits.SkipBetweenQuestTimers.Value },
         };
 
-        static bool Prefix(QuestEventManager __instance, string _eventUID, int _gameHourAllowed, ref bool __result)
+        static bool Prefix(QuestEventManager __instance, string _eventUID, ref int _gameHourAllowed, ref bool __result)
         {
             try
             {
@@ -161,10 +165,17 @@ namespace NoTimeLimits
                         return false; // skip
                     }
 
-                    if (ShouldSkip.TryGetValue(eventData.Name, out var shouldSkip))
+                    if (ChangeTime.TryGetValue(eventData.Name, out var shouldSkip))
                     {
-                        if (!shouldSkip())
+                        var time = shouldSkip();
+                        if (time == -1)
                             return true; // run original
+
+                        if (time > 0)
+                        {
+                            _gameHourAllowed = time;
+                            return true; // run original
+                        }
 
                         //NoTimeLimits.DebugTrace($"Forcing {eventData.Name} to be expired");
                         __result = true;
