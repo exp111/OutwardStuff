@@ -32,10 +32,10 @@
 * elemental bullets
 * summoner: Spawn ie pet pearlbirds that attack
 * LAN mp
-* ~~sit skill for meditation~~
-* graph visualizer for quests/dialogs (generic NodeCanvas viewer?)
+* ~~sit skill for meditation~~ => SkilledAtMeditation
+* ~~graph visualizer for quests/dialogs (generic NodeCanvas viewer?)~~ => https://github.com/exp111/OutwardNodeCanvasViewer
 * Sideloader multithreading?
 * need to buy map first before seeing it ingame (else grey screen or just area image)
-* debug menu area tp names (Dungeon2 => Dungeon 2 (Giant's Village))
+* ~~debug menu area tp names (Dungeon2 => Dungeon 2 (Giant's Village))~~ => DebugMode
 * anti cheat (detect debug mode usage, require other players to also use that mod, send Global.Cheats on connect + kick
 * right click on map to get pos/teleport
