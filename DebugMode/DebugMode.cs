@@ -27,6 +27,9 @@ namespace DebugMode
         public static ManualLogSource Log;
         private static Harmony harmony;
 
+        // Runtime vars
+        public static int TPMarkerID = -1;
+
         void Awake()
         {
             try
@@ -240,6 +243,95 @@ namespace DebugMode
             {
                 DebugMode.Log.LogMessage($"Exception during CharacterCheats.InitAreaSwitches.Overwrite: {e}");
             }
+        }
+    }
+
+    //FIXME: find other function that is only called once (or less often than update), as AwakeInit and StartInit aren't called for some reason
+    [HarmonyPatch(typeof(MapDisplay), nameof(MapDisplay.Update))]
+    public class MapDisplay_Update
+    {
+        [HarmonyPostfix]
+        public static void Postfix(MapDisplay __instance)
+        {
+            try
+            {
+                if (DebugMode.TPMarkerID != -1) 
+                    return;
+
+                // get markerselector
+                DebugMode.DebugLog($"MapDisplay.AwakeInit start: {__instance}");
+                var selector = __instance.m_markerSelector;
+                DebugMode.DebugLog($"Selector: {selector}");
+                var firstChild = selector.m_items[0].gameObject;
+                // copy marker and append to parent
+                var tpMarker = GameObject.Instantiate(firstChild, selector.transform);
+                DebugMode.DebugLog($"New Marker: {tpMarker}");
+                // change sprite
+                var item = tpMarker.GetComponent<RadialSelectorItem>();
+                var tex = Resources.Load<Texture2D>("MapMagic_Window"); //TODO: better icon
+                if (!tex)
+                {
+                    DebugMode.Log.LogMessage("Texture not found!");
+                }
+                else
+                {
+                    var sprite = Sprite.Create(tex,
+                        new Rect(0.0f, 0.0f, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    DebugMode.DebugLog($"Sprite: {sprite}");
+                    item.Image.overrideSprite = sprite;
+                }
+
+                // update selector
+                selector.Refresh();
+                // save the id
+                DebugMode.TPMarkerID = item.ID;
+            }
+            catch (Exception e)
+            {
+                DebugMode.Log.LogMessage($"Exception during MapDisplay.AwakeInit: {e}");
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(MapDisplay), nameof(MapDisplay.OnMarkerSelected))]
+    public class MapDisplay_OnMarkerSelected
+    {
+        [HarmonyPrefix]
+        public static bool Prefix(MapDisplay __instance, int _id)
+        {
+            try
+            {
+                DebugMode.DebugLog($"MapDisplay.OnMarkerSelected start: {__instance}, id: {_id}");
+                if (_id == DebugMode.TPMarkerID)
+                {
+                    // tp to marker
+                    var newPos = Vector3.zero;
+                    var pos = __instance.m_markerSelector.transform.localPosition;
+                    var zoom = __instance.m_zoomLevelSmooth * MapDisplay.BASE_MARKER_ZOOM;
+                    var scene = __instance.CurrentMapScene;
+                    // reverse calculation from MapWorldMarker.CalculateMapPosition
+                    newPos.x = ((pos.x / zoom) - scene.MarkerOffset.x) / scene.MarkerScale.x;
+                    newPos.z = ((pos.y / zoom) - scene.MarkerOffset.y) / scene.MarkerScale.y;
+                    newPos.y = 100; // placeholder y pos, in the sky //TODO: what if y is higher than 100?
+                    // get y pos by raycasting to the ground
+                    RaycastHit raycastHit;
+                    if (Physics.Raycast(newPos, Vector3.down, out raycastHit, 150f, Global.FullEnvironmentMask))
+                    {
+                        newPos = raycastHit.point;
+                    }
+                    var rot = __instance.LocalCharacter.transform.rotation;
+                    __instance.LocalCharacter.Teleport(newPos, rot);
+                    // hide selector
+                    __instance.m_markerSelector.SetActiveWithAnim(false);
+                    return false; // skip
+                }
+                return true; // dont skip
+            }
+            catch (Exception e)
+            {
+                DebugMode.Log.LogMessage($"Exception during MapDisplay.OnMarkerSelected: {e}");
+            }
+            return true;
         }
     }
 }
