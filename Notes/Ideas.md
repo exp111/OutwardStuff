@@ -38,5 +38,7 @@
 * need to buy map first before seeing it ingame (else grey screen or just area image)
 * ~~debug menu area tp names (Dungeon2 => Dungeon 2 (Giant's Village))~~ => DebugMode
 * anti cheat (detect debug mode usage, require other players to also use that mod, send Global.Cheats on connect + kick
-* right click on map to get pos/teleport
+* ~~right click on map to get pos/teleport~~ => DebugMode
 * teleport to misc dungeons
+* full bright
+* map for each level?

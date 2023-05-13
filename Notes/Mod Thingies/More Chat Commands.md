@@ -6,10 +6,10 @@ Ideas:
 - chat history with arrow controls
 - overwrite original commands or add better error handling to them => transpiler?
 - item info which takes item id list and shows them pretty, spawnable
-- fix invulnerability not working after rejoin
+- fix invulnerability not working after rejoin => DebugMode?
 - disable autosave completely (even on world exit)
 - /date set
 - disable videocamera on debugtoggle
 - /wait days (`EnvironmentConditions.Instance.TimeJump`)
-- right click on map context menu to teleport
 - /spawnChest
+- /pos

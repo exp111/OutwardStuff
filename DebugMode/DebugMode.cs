@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 
@@ -23,12 +24,14 @@ namespace DebugMode
         public static ConfigEntry<bool> ShowHierarchyViewer;
         public static ConfigEntry<bool> ShowPhotonStats;
         public static ConfigEntry<bool> OverwriteAreaSwitchNames;
+        public static ConfigEntry<bool> EnableMapActions;
 
         public static ManualLogSource Log;
         private static Harmony harmony;
 
         // Runtime vars
         public static int TPMarkerID = -1;
+        public static Sprite TPMarkerTexture;
 
         void Awake()
         {
@@ -38,13 +41,9 @@ namespace DebugMode
                 Log.LogMessage("Awake");
 
                 // Setup Config
-                EnableDebug = Config.Bind("General", "Enable Debug", true);
-                ShowHierarchyViewer = Config.Bind("General", "Show Hierarchy Viewer", false);
-                ShowPhotonStats = Config.Bind("General", "Show Photon Stats", false);
-                OverwriteAreaSwitchNames = Config.Bind("General", "Overwrite Area Switch Names", true, "Make the Area Names in the F2 menu human-readable.");
-                OverwriteAreaSwitchNames.SettingChanged += OverwriteAreaSwitchNames_SettingChanged; ;
-
-                Config.SettingChanged += (_, e) => ApplyConfig();
+                SetupConfig();
+                // Load sprites
+                LoadTextures();
 
                 // Harmony
                 harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
@@ -53,6 +52,60 @@ namespace DebugMode
             {
                 Log.LogMessage($"Exception during DebugMode.Awake: {e}");
             }
+        }
+
+        private void SetupConfig()
+        {
+            EnableDebug = Config.Bind("General", "Enable Debug", true);
+            ShowHierarchyViewer = Config.Bind("General", "Show Hierarchy Viewer", false);
+            ShowPhotonStats = Config.Bind("General", "Show Photon Stats", false);
+            OverwriteAreaSwitchNames = Config.Bind("General", "Overwrite Area Switch Names", true, "Make the Area Names in the F2 menu human-readable.");
+            OverwriteAreaSwitchNames.SettingChanged += OverwriteAreaSwitchNames_SettingChanged;
+            EnableMapActions = Config.Bind("General", "Enable Map Actions", true, "Enables the map actions that can be used when right-clicking the map like teleport (restart to hide marker).");
+
+
+            Config.SettingChanged += (_, e) => ApplyConfig();
+        }
+        private void LoadTextures()
+        {
+            try
+            {
+                DebugLog($"Location: {Info.Location}, BepInExRootPath: {Paths.BepInExRootPath}");
+                var directory = Path.GetDirectoryName(Info.Location);
+                if (directory == null)
+                    directory = Path.Combine(Paths.BepInExRootPath, "scripts");
+                TPMarkerTexture = LoadSprite(Path.Combine(directory, "tpMarker.png"));
+                Log.LogMessage($"Loaded sprites from {directory}");
+            }
+            catch (Exception e)
+            {
+                Log.LogMessage($"Exception during DebugMode.LoadTextures: {e}");
+            }
+        }
+
+        private Texture2D LoadTexture(string path)
+        {
+            try
+            {
+                var tex = new Texture2D(4, 4);
+                var file = File.ReadAllBytes(path);
+                tex.LoadImage(file);
+                return tex;
+            }
+            catch (Exception e)
+            {
+                Log.LogMessage($"Exception while loading texture from path {path}! Message: {e}");
+            }
+            return null;
+        }
+        private Sprite LoadSprite(string path)
+        {
+            var tex = LoadTexture(path);
+            if (!tex)
+                return null;
+
+            return Sprite.Create(tex,
+                new Rect(0.0f, 0.0f, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         }
 
         private void OverwriteAreaSwitchNames_SettingChanged(object sender, EventArgs e)
@@ -255,7 +308,8 @@ namespace DebugMode
         {
             try
             {
-                if (DebugMode.TPMarkerID != -1) 
+                // check for cheats //TODO: remove when cheats are disabled again?
+                if (!Global.CheatsEnabled || !DebugMode.EnableMapActions.Value || DebugMode.TPMarkerID != -1)
                     return;
 
                 // get markerselector
@@ -268,17 +322,14 @@ namespace DebugMode
                 DebugMode.DebugLog($"New Marker: {tpMarker}");
                 // change sprite
                 var item = tpMarker.GetComponent<RadialSelectorItem>();
-                var tex = Resources.Load<Texture2D>("MapMagic_Window"); //TODO: better icon
-                if (!tex)
+                if (!DebugMode.TPMarkerTexture)
                 {
                     DebugMode.Log.LogMessage("Texture not found!");
                 }
                 else
                 {
-                    var sprite = Sprite.Create(tex,
-                        new Rect(0.0f, 0.0f, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-                    DebugMode.DebugLog($"Sprite: {sprite}");
-                    item.Image.overrideSprite = sprite;
+                    DebugMode.DebugLog($"Sprite: {DebugMode.TPMarkerTexture}");
+                    item.Image.overrideSprite = DebugMode.TPMarkerTexture;
                 }
 
                 // update selector
@@ -302,8 +353,14 @@ namespace DebugMode
             try
             {
                 DebugMode.DebugLog($"MapDisplay.OnMarkerSelected start: {__instance}, id: {_id}");
+                if (!DebugMode.EnableMapActions.Value)
+                    return true; // dont skip
+
                 if (_id == DebugMode.TPMarkerID)
                 {
+                    if (!Global.CheatsEnabled)
+                        return true; // dont skip
+
                     // tp to marker
                     var newPos = Vector3.zero;
                     var pos = __instance.m_markerSelector.transform.localPosition;
@@ -312,10 +369,10 @@ namespace DebugMode
                     // reverse calculation from MapWorldMarker.CalculateMapPosition
                     newPos.x = ((pos.x / zoom) - scene.MarkerOffset.x) / scene.MarkerScale.x;
                     newPos.z = ((pos.y / zoom) - scene.MarkerOffset.y) / scene.MarkerScale.y;
-                    newPos.y = 100; // placeholder y pos, in the sky //TODO: what if y is higher than 100?
+                    newPos.y = 300; // placeholder y pos, in the sky //TODO: what if y is higher than 100? also what if there is a ceiling? raycast from the ground?
                     // get y pos by raycasting to the ground
                     RaycastHit raycastHit;
-                    if (Physics.Raycast(newPos, Vector3.down, out raycastHit, 150f, Global.FullEnvironmentMask))
+                    if (Physics.Raycast(newPos, Vector3.down, out raycastHit, 350f, Global.FullEnvironmentMask))
                     {
                         newPos = raycastHit.point;
                     }

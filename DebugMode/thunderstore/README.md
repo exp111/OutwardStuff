@@ -4,4 +4,6 @@ Also allows to enable/disable debug options like:
 - Photon Stats
 - Hierarchy Viewer
 
+Additionally allows other debug tools like right-clicking on the map to teleport.
+
 Ignores any existing debug file in favour of this mod.
