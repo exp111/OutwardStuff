@@ -41,4 +41,5 @@
 * ~~right click on map to get pos/teleport~~ => DebugMode
 * teleport to misc dungeons
 * full bright
-* map for each level?
+* map image for each level?
+* ~~disable videocamera~~ => DebugMode

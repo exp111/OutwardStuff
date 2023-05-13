@@ -1,8 +1,4 @@
-﻿using System;
-using UnityEngine;
-using static EnvironmentConditions;
-
-namespace MoreChatCommands
+﻿namespace MoreChatCommands
 {
     public class Clear : CustomDebugCmd
     {

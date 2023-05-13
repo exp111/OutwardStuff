@@ -261,6 +261,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Pos.cs" />
     <Compile Include="Commands\Clear.cs" />
     <Compile Include="Commands\Burn.cs" />
     <Compile Include="Commands\Skill.cs" />

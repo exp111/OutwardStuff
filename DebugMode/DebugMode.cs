@@ -25,6 +25,7 @@ namespace DebugMode
         public static ConfigEntry<bool> ShowPhotonStats;
         public static ConfigEntry<bool> OverwriteAreaSwitchNames;
         public static ConfigEntry<bool> EnableMapActions;
+        public static ConfigEntry<bool> DisableVideoCamera;
 
         public static ManualLogSource Log;
         private static Harmony harmony;
@@ -62,7 +63,7 @@ namespace DebugMode
             OverwriteAreaSwitchNames = Config.Bind("General", "Overwrite Area Switch Names", true, "Make the Area Names in the F2 menu human-readable.");
             OverwriteAreaSwitchNames.SettingChanged += OverwriteAreaSwitchNames_SettingChanged;
             EnableMapActions = Config.Bind("General", "Enable Map Actions", true, "Enables the map actions that can be used when right-clicking the map like teleport (restart to hide marker).");
-
+            DisableVideoCamera = Config.Bind("General", "Disable Video Camera", true, "Disables the video camera that pops up when you press the semicolon.");
 
             Config.SettingChanged += (_, e) => ApplyConfig();
         }
@@ -389,6 +390,17 @@ namespace DebugMode
                 DebugMode.Log.LogMessage($"Exception during MapDisplay.OnMarkerSelected: {e}");
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(VideoCamera), nameof(VideoCamera.Update))]
+    class VideoCamera_Update
+    {
+        [HarmonyPrefix]
+        public static bool Prefix()
+        {
+            // return false to skip => if option is true, skip
+            return !DebugMode.DisableVideoCamera.Value;
         }
     }
 }

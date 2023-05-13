@@ -9,7 +9,5 @@ Ideas:
 - fix invulnerability not working after rejoin => DebugMode?
 - disable autosave completely (even on world exit)
 - /date set
-- disable videocamera on debugtoggle
 - /wait days (`EnvironmentConditions.Instance.TimeJump`)
 - /spawnChest
-- /pos
