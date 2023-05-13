@@ -261,6 +261,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Unstuck.cs" />
+    <Compile Include="Commands\Kill.cs" />
+    <Compile Include="Commands\SpawnChest.cs" />
     <Compile Include="Commands\Pos.cs" />
     <Compile Include="Commands\Clear.cs" />
     <Compile Include="Commands\Burn.cs" />
