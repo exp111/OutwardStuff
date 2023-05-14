@@ -366,10 +366,13 @@ namespace DebugMode
                     var newPos = Vector3.zero;
                     var pos = __instance.m_markerSelector.transform.localPosition;
                     var zoom = __instance.m_zoomLevelSmooth * MapDisplay.BASE_MARKER_ZOOM;
+                    var zoomOffset = __instance.m_zoomTransform.anchoredPosition;
                     var scene = __instance.CurrentMapScene;
                     // reverse calculation from MapWorldMarker.CalculateMapPosition
-                    newPos.x = ((pos.x / zoom) - scene.MarkerOffset.x) / scene.MarkerScale.x;
-                    newPos.z = ((pos.y / zoom) - scene.MarkerOffset.y) / scene.MarkerScale.y;
+                    // include the zoomoffset
+                    newPos.x = (((pos.x - zoomOffset.x) / zoom) - scene.MarkerOffset.x) / scene.MarkerScale.x;
+                    // 2d y is 3d z
+                    newPos.z = (((pos.y - zoomOffset.y) / zoom) - scene.MarkerOffset.y) / scene.MarkerScale.y;
                     newPos.y = 300; // placeholder y pos, in the sky //TODO: what if y is higher than 100? also what if there is a ceiling? raycast from the ground?
                     // get y pos by raycasting to the ground
                     RaycastHit raycastHit;
