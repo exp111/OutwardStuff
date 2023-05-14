@@ -261,6 +261,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\DumpDropable.cs" />
     <Compile Include="Commands\Unstuck.cs" />
     <Compile Include="Commands\Kill.cs" />
     <Compile Include="Commands\SpawnChest.cs" />
