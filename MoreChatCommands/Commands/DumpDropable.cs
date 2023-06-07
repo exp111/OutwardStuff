@@ -43,11 +43,11 @@ namespace MoreChatCommands
                         itemDrops = "";
                         foreach (var drop in droptable.m_itemDrops)
                         {
-                            itemDrops += $"new ItemDropChance(){{DropChance={drop.DropChance},MinDropCount={drop.MinDropCount},MaxDropCount={drop.MaxDropCount},ItemID={drop.DroppedItem.ItemID}}},";
+                            itemDrops += $"new(){{DropChance={drop.DropChance},MinDropCount={drop.MinDropCount},MaxDropCount={drop.MaxDropCount},ItemID={drop.DroppedItem.ItemID}}},";
                         }
                         itemDrops = $"new() {{{itemDrops}}}";
                     }
-                    droptableString = $"new DropTable() {{MinNumberOfDrops={droptable.MinNumberOfDrops},MaxNumberOfDrops={droptable.MaxNumberOfDrops},m_itemDrops={itemDrops}}}";
+                    droptableString = $"new(){{MinNumberOfDrops={droptable.MinNumberOfDrops},MaxNumberOfDrops={droptable.MaxNumberOfDrops},m_itemDrops={itemDrops}}}";
                 }
 
                 var text = $"[\"{name}\"] = CreateDropable(\"{name}\", {droptableString}),";
