@@ -120,6 +120,7 @@ namespace SharedMoan
                 if (AllowedSounds.ContainsKey(sound))
                 {
                     SharedMoan.DebugTrace($"Playing sound...");
+                    OnExecute(sound);
                 }
             }
             catch (Exception e)
@@ -129,10 +130,10 @@ namespace SharedMoan
         }
 
         // Stolen from PlaySound.OnExecute
-        private void OnExecute(GlobalAudioManager.Sounds Sound)
+        private void OnExecute(GlobalAudioManager.Sounds sound)
         {
             // currently this is playing at the camera, but imo thats fine atm
-            Global.AudioManager.PlaySound(Sound, 0f, 1f, 1f, 1f, 1f);
+            Global.AudioManager.PlaySound(sound, 0f, 1f, 1f, 1f, 1f);
         }
     }
 }

@@ -31,7 +31,7 @@
 * Gothic weapons/world/quests
 * elemental bullets
 * summoner: Spawn ie pet pearlbirds that attack
-* LAN mp
+* LAN mp => host: https://flobuk.gitlab.io/assets/docs/tanksmp/guides/photon-server-for-lan, configure: https://doc.photonengine.com/pun/current/getting-started/initial-setup#photon_server_v5
 * ~~sit skill for meditation~~ => SkilledAtMeditation
 * ~~graph visualizer for quests/dialogs (generic NodeCanvas viewer?)~~ => https://github.com/exp111/OutwardNodeCanvasViewer
 * Sideloader multithreading?
@@ -43,3 +43,7 @@
 * full bright
 * map image for each level?
 * ~~disable videocamera~~ => DebugMode
+* make unique enemies respawn
+* rebind debug keys
+* instanced loot
+* shared quest rewards with individual choices?
