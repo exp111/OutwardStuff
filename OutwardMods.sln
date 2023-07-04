@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoTimeLimits", "NoTimeLimit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreChange", "StoreChange\StoreChange.csproj", "{B5FC670F-34B0-4094-84D8-8A4AC8F383EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAN", "LAN\LAN.csproj", "{64402E05-FC73-4C5C-A8DD-9E80BCD63214}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,10 @@ Global
 		{B5FC670F-34B0-4094-84D8-8A4AC8F383EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5FC670F-34B0-4094-84D8-8A4AC8F383EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5FC670F-34B0-4094-84D8-8A4AC8F383EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
