@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreChange", "StoreChange\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAN", "LAN\LAN.csproj", "{64402E05-FC73-4C5C-A8DD-9E80BCD63214}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial", "Tutorial\Tutorial.csproj", "{576B024F-3B06-4B7A-9E69-21C8DF9AB470}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64402E05-FC73-4C5C-A8DD-9E80BCD63214}.Release|Any CPU.Build.0 = Release|Any CPU
+		{576B024F-3B06-4B7A-9E69-21C8DF9AB470}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{576B024F-3B06-4B7A-9E69-21C8DF9AB470}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{576B024F-3B06-4B7A-9E69-21C8DF9AB470}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{576B024F-3B06-4B7A-9E69-21C8DF9AB470}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
