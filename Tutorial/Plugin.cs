@@ -26,16 +26,6 @@ namespace Tutorial
                 Log.LogMessage("Awake");
                 DebugLog("Using a DEBUG build.");
 
-#if DEBUG
-                // wait for debugger, or 10 seconds
-                var timeout = 0;
-                while (!Debugger.IsAttached || timeout < 10)
-                {
-                    timeout++;
-                    Thread.Sleep(1000);
-                }
-#endif
-
                 // Init Harmony
                 Harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ID);
             }

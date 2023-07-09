@@ -12,8 +12,6 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <MdbToolPath>C:\Users\Exp\.dotnet\tools</MdbToolPath>
-    <MdbToolExe>pdb2mdb.exe</MdbToolExe>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -286,10 +284,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /y "$(TargetPath)" "$(ProjectDir)\thunderstore\plugins\"
+    <PostBuildEvent>pdb2mdb.exe "$(TargetPath)"
+copy /y "$(TargetPath)" "$(ProjectDir)\thunderstore\plugins\"
 copy /y "$(TargetPath).mdb" "$(ProjectDir)\thunderstore\plugins\"</PostBuildEvent>
   </PropertyGroup>
-  <Target Name="PostBuild" BeforeTargets="PostBuildEvent">
-    <Exec WorkingDirectory="$(MdbToolPath)" Command="$(MdbToolExe) &quot;$(TargetPath)&quot;" />
-  </Target>
 </Project>
