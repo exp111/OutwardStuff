@@ -7,7 +7,7 @@
 * unlimited pets
 * musket (gun with zoom function, long reload => basically flintlock gun) => [[Musket]]
 * halo weapons (energy sword + guns)
-* amogus outfit (dropped from amogus gang npcs? + quest?)
+* amogus outfit (dropped from amogus gang npcs? + quest?; backpack; emergency quest where you have to go to a meeting (get it?) for some npc and get backstabbed or smth)
 * make merchants/npcs attackable, be able to talk to random npcs, more quests in cities => more believable cities
 * void mage skill tree (teleportation and stuff)
 * teleport stones + wormhole potion thing?
